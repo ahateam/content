@@ -76,7 +76,7 @@ public class ContentTagService {
 	 */
 	public List<ContentTag> getTags(DruidPooledConnection conn, Byte status, String groupKeyword, Integer count,
 			Integer offset) throws Exception {
-		return tagRepository.getListByKeys(conn, new String[] { "status", "group_keyword" },
+		return tagRepository.getListByANDKeys(conn, new String[] { "status", "group_keyword" },
 				new Object[] { status, groupKeyword }, count, offset);
 	}
 

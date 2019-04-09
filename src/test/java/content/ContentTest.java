@@ -29,23 +29,23 @@ public class ContentTest {
 		}
 	}
 
-	private static Long CID = 396499704014979L;
+	private static Long CID = 398028682618067L;
 
 	public static void main(String[] args) throws Exception {
 		// testCreateContent();
 
-		// testAddTag(CID,"tag5");
+		// testAddTag(CID,"tag6");
 
 		// testGetContentTags(CID);
 
-		// testDelTag(CID,"tag6");
+		// testDelTag(CID,"tag5");
 
-		JSONArray arr = new JSONArray();
-		arr.add("tag1");
-		arr.add("tag2");
-		testSetTags(396368237107578L, arr);
+		// JSONArray arr = new JSONArray();
+		// arr.add("tag1");
+		// arr.add("tag2");
+		// testSetTags(CID, arr);
 
-		// testGetByTags();
+		testGetByTags();
 	}
 
 	private static void testCreateContent() {
@@ -107,12 +107,9 @@ public class ContentTest {
 
 	public static void testGetByTags() {
 		try {
-			JSONArray arr = new JSONArray();
-			arr.add("tag3");
-			arr.add("tag4");
 
-			List<Content> lc = contentService.queryContentsByTags(conn, null, null, null, null, "kind_type", arr, 10,
-					0);
+			List<Content> lc = contentService.queryContentsByTags(conn, null, null, null, null, "kind_type",
+					new String[] { "tag3", "tag4" }, 10, 0);
 			System.out.println(JSON.toJSONString(lc, true));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

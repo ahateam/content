@@ -14,6 +14,7 @@ import zyxhj.cms.domain.ContentTagGroup;
 import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
 import zyxhj.core.domain.User;
+import zyxhj.utils.CodecUtils;
 import zyxhj.utils.ServiceUtils;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
@@ -180,8 +181,9 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
+			String[] strTags = CodecUtils.convertJSONArray2StringArray(tags);
 			List<Content> ret = contentService.queryContentsByTags(conn, contentType, status, upUserId, upChannelId,
-					groupKeyword, tags, count, offset);
+					groupKeyword, strTags, count, offset);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}

@@ -1,5 +1,6 @@
 package zyxhj.cms.repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.druid.pool.DruidPooledConnection;
@@ -15,6 +16,12 @@ public class ContentTagGroupRepository extends RDSRepository<ContentTagGroup> {
 	}
 
 	public List<String> getContentTagGroupTypes(DruidPooledConnection conn) throws ServerException {
-		return getColumnStrings(conn, "type", null, null, 512, 0);
+
+		List<ContentTagGroup> ctgs = getList(conn, null, null, 512, 0, "type");
+		List<String> ret = new ArrayList<>(ctgs.size());
+		for (ContentTagGroup ctg : ctgs) {
+			ret.add(ctg.type);
+		}
+		return ret;
 	}
 }

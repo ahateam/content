@@ -127,7 +127,7 @@ public class ContentService {
 	 * 根据标签查询内容
 	 */
 	public List<Content> queryContentsByTags(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
-			Long upChannelId, String groupKeyword, JSONArray tags, Integer count, Integer offset) throws Exception {
+			Long upChannelId, String groupKeyword, String[] tags, Integer count, Integer offset) throws Exception {
 		return contentRepository.queryContentsByTags(conn, type, status, upUserId, upChannelId, groupKeyword, tags,
 				count, offset);
 	}
