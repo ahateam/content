@@ -18,6 +18,10 @@ public class ContentVerticle extends ZeroVerticle {
 		return "content";
 	}
 
+	public int port() {
+		return 8080;
+	}
+
 	protected void init() throws Exception {
 
 		DataSourceUtils.initDataSourceConfig();

@@ -51,7 +51,7 @@ public class ContentRepository extends RDSRepository<Content> {
 
 		sql.fillSQL(sb);
 
-		return getListByTags(conn, "tags", groupKeyword, tags, sb.toString(), sql.getParams(), count, offset);
+		return getListByTagsJSONArray(conn, "tags", groupKeyword, tags, sb.toString(), sql.getParams(), count, offset);
 	}
 
 	public JSONArray getContentTags(DruidPooledConnection conn, Long contentId, String groupKeyword)
