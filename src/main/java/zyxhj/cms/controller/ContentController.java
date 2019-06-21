@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.fastjson.JSONArray;
 
@@ -20,20 +21,19 @@ import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
 import zyxhj.utils.api.Controller;
 import zyxhj.utils.data.DataSource;
-import zyxhj.utils.data.DataSourceUtils;
 
 public class ContentController extends Controller {
 
 	private static Logger log = LoggerFactory.getLogger(ContentController.class);
 
-	private DataSource dsRds;
+	private DruidDataSource dds;
 	private ContentService contentService;
 	private ContentTagService contentTagService;
 
 	public ContentController(String node) {
 		super(node);
 		try {
-			dsRds = DataSourceUtils.getDataSource("rdsDefault");
+			dds = DataSource.getDruidDataSource("rdsDefault");
 
 			contentService = Singleton.ins(ContentService.class);
 			contentTagService = Singleton.ins(ContentTagService.class);
@@ -63,7 +63,7 @@ public class ContentController extends Controller {
 			@P(t = "数据（JSON）") String data//
 	) throws Exception {
 		Long upUserId = userId;
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			Content cnt = contentService.createContentDraft(conn, type, upUserId, upChannelId, title, data);
@@ -86,7 +86,7 @@ public class ContentController extends Controller {
 			@P(t = "数据（JSON）") String data//
 	) throws Exception {
 		Long upUserId = userId;
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			Content cnt = contentService.createContentPublished(conn, type, upUserId, upChannelId, title, data);
@@ -105,7 +105,7 @@ public class ContentController extends Controller {
 			@P(t = "用户编号") Long userId, //
 			@P(t = "内容编号") Long contentId //
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			Content content = contentService.auth(conn, contentId);// content鉴权
@@ -126,7 +126,7 @@ public class ContentController extends Controller {
 			@P(t = "标签分组关键字") String groupKeyword, //
 			@P(t = "标签") String tag//
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			Content content = contentService.auth(conn, contentId);// content鉴权
@@ -150,7 +150,7 @@ public class ContentController extends Controller {
 			@P(t = "标签分组关键字") String groupKeyword, //
 			@P(t = "标签") String tag//
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			Content content = contentService.auth(conn, contentId);// content鉴权
@@ -178,7 +178,7 @@ public class ContentController extends Controller {
 			@P(t = "数量") Integer count, //
 			@P(t = "偏移量") Integer offset//
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			String[] strTags = CodecUtils.convertJSONArray2StringArray(tags);
@@ -207,7 +207,7 @@ public class ContentController extends Controller {
 			@P(t = "数量") Integer count, //
 			@P(t = "偏移量") Integer offset//
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			List<Content> ret = contentService.searchContentsByKeyword(conn, contentType, status, upUserId, upChannelId,
@@ -229,7 +229,7 @@ public class ContentController extends Controller {
 			@P(t = "用户编号") Long userId, //
 			@P(t = "内容编号") Long contentId//
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			Content ret = contentService.getContentById(conn, contentId);
@@ -251,7 +251,7 @@ public class ContentController extends Controller {
 			@P(t = "内容编号") Long contentId, //
 			@P(t = "标签分组关键字") String groupKeyword //
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			JSONArray ret = contentService.getContentTagsById(conn, contentId, groupKeyword);
@@ -276,7 +276,7 @@ public class ContentController extends Controller {
 			@P(t = "标签分组关键字") String groupKeyword, //
 			@P(t = "标签名称") String name //
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			ContentTag ret = contentTagService.createTag(conn, groupKeyword, name);
 
@@ -296,7 +296,7 @@ public class ContentController extends Controller {
 			@P(t = "标签编号") Long tagId, //
 			@P(t = "状态") Byte status //
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			int ret = contentTagService.editTagStatus(conn, tagId, status);
 
@@ -318,7 +318,7 @@ public class ContentController extends Controller {
 			Integer count, //
 			Integer offset//
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			List<ContentTag> ret = contentTagService.getTags(conn, status, groupKeyword, count, offset);
 
@@ -339,7 +339,7 @@ public class ContentController extends Controller {
 			@P(t = "标签分组关键字") String keyword, //
 			@P(t = "备注", r = false) String remark //
 	) throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			ContentTagGroup ret = contentTagService.createTagGroup(conn, type, keyword, remark);
 
@@ -356,7 +356,7 @@ public class ContentController extends Controller {
 			ret = "内容标签分组大类列表"//
 	)
 	public APIResponse getContentTagGroupTypes() throws Exception {
-		try (DruidPooledConnection conn = (DruidPooledConnection) dsRds.openConnection()) {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			List<String> ret = contentTagService.getTagGroupTypes(conn);
 

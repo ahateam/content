@@ -1,27 +1,16 @@
 package xhj.cn.start;
 
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 
 import zyxhj.cms.domain.Content;
 import zyxhj.utils.data.DataSource;
-import zyxhj.utils.data.DataSourceUtils;
 import zyxhj.utils.data.rds.RDSUtils;
 
 public class ContentTest {
 
 	private static DruidPooledConnection conn;
-
-	static {
-		DataSourceUtils.initDataSourceConfig();
-		// contentService = ContentService.getInstance();
-
-		try {
-			conn = (DruidPooledConnection) DataSourceUtils.getDataSource("rdsDefault").openConnection();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	public static void main(String[] args) {
 
@@ -32,11 +21,11 @@ public class ContentTest {
 	private static void testDB() {
 		System.out.println("testDB");
 		try {
-			DataSource dsRds = DataSourceUtils.getDataSource("rdsDefault");
+			DruidDataSource dds = DataSource.getDruidDataSource("rdsDefault.prop");
 
-			// RDSUtils.dropTableByEntity(dsRds, Tunnel.class);
+			// RDSUtils.dropTableByEntity(dds, Tunnel.class);
 
-			RDSUtils.createTableByEntity(dsRds, Content.class);
+			RDSUtils.createTableByEntity(dds, Content.class);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

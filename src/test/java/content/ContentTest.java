@@ -9,7 +9,7 @@ import com.alibaba.fastjson.JSONArray;
 import zyxhj.cms.domain.Content;
 import zyxhj.cms.service.ContentService;
 import zyxhj.utils.Singleton;
-import zyxhj.utils.data.DataSourceUtils;
+import zyxhj.utils.data.DataSource;
 
 public class ContentTest {
 
@@ -18,12 +18,10 @@ public class ContentTest {
 	private static ContentService contentService;
 
 	static {
-		DataSourceUtils.initDataSourceConfig();
-
 		try {
 			contentService = Singleton.ins(ContentService.class);
 
-			conn = (DruidPooledConnection) DataSourceUtils.getDataSource("rdsDefault").openConnection();
+			conn = DataSource.getDruidDataSource("rdsDefault.prop").getConnection();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
