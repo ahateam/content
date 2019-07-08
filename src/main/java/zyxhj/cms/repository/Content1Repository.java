@@ -7,22 +7,22 @@ import org.apache.commons.lang3.StringUtils;
 import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.fastjson.JSONArray;
 
-import zyxhj.cms.domain.Content;
+import zyxhj.cms.domain.Content1;
 import zyxhj.utils.api.ServerException;
 import zyxhj.utils.data.rds.RDSRepository;
 import zyxhj.utils.data.rds.SQL;
 
-public class ContentRepository extends RDSRepository<Content> {
+public class Content1Repository extends RDSRepository<Content1> {
 
-	public ContentRepository() {
-		super(Content.class);
+	public Content1Repository() {
+		super(Content1.class);
 	}
 
 	/**
 	 * RDS的FULLTEXT全文索引尝试失败，查不出东西</br>
 	 * 将来准备用opensearch等工具替代，目前使用select like，只查询title字段
 	 */
-	public List<Content> searchContentsByKeyword(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
+	public List<Content1> searchContentsByKeyword(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
 			Long upChannelId, String keywords, Integer count, Integer offset) throws ServerException {
 
 		StringBuffer sb = new StringBuffer("WHERE ");
@@ -38,7 +38,7 @@ public class ContentRepository extends RDSRepository<Content> {
 		return this.getList(conn, sb.toString(), sql.getParams(), count, offset);
 	}
 
-	public List<Content> queryContentsByTags(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
+	public List<Content1> queryContentsByTags(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
 			Long upChannelId, String groupKeyword, String[] tags, Integer count, Integer offset)
 			throws ServerException {
 

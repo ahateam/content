@@ -1,12 +1,12 @@
 package zyxhj.cms.repository;
 
-import zyxhj.cms.domain.ContentTag;
+import zyxhj.cms.domain.ContentTag1;
 import zyxhj.utils.data.rds.RDSRepository;
 
-public class ContentTagRepository extends RDSRepository<ContentTag> {
+public class ContentTagRepository extends RDSRepository<ContentTag1> {
 
 	public ContentTagRepository() {
-		super(ContentTag.class);
+		super(ContentTag1.class);
 	}
 
 }

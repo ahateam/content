@@ -7,15 +7,14 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
-import com.alibaba.fastjson.JSONArray;
+import com.alicloud.openservices.tablestore.SyncClient;
 
-import zyxhj.cms.domain.Content;
-import zyxhj.cms.domain.ContentTag;
-import zyxhj.cms.domain.ContentTagGroup;
+import zyxhj.cms.domain.Content1;
+import zyxhj.cms.domain.ContentTag1;
+import zyxhj.cms.domain.ContentTagGroup1;
 import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
 import zyxhj.core.domain.User;
-import zyxhj.utils.CodecUtils;
 import zyxhj.utils.ServiceUtils;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
@@ -27,6 +26,7 @@ public class ContentController extends Controller {
 	private static Logger log = LoggerFactory.getLogger(ContentController.class);
 
 	private DruidDataSource dds;
+	private SyncClient client;
 	private ContentService contentService;
 	private ContentTagService contentTagService;
 
@@ -34,6 +34,7 @@ public class ContentController extends Controller {
 		super(node);
 		try {
 			dds = DataSource.getDruidDataSource("rdsDefault");
+			client = DataSource.getTableStoreSyncClient("tsDefault.prop");
 
 			contentService = Singleton.ins(ContentService.class);
 			contentTagService = Singleton.ins(ContentTagService.class);
@@ -43,10 +44,10 @@ public class ContentController extends Controller {
 	}
 
 	@ENUM(des = "内容类型")
-	public Content.TYPE[] contentTypes = Content.TYPE.values();
+	public Content1.TYPE[] contentTypes = Content1.TYPE.values();
 
 	@ENUM(des = "内容状态")
-	public Content.STATUS[] contentStatus = Content.STATUS.values();
+	public Content1.STATUS[] contentStatus = Content1.STATUS.values();
 
 	/**
 	 * 
@@ -57,17 +58,19 @@ public class ContentController extends Controller {
 	)
 	public APIResponse createContentDraft(//
 			@P(t = "用户编号") Long userId, //
+			@P(t = "用户编号") String module, //
 			@P(t = "内容类型Content.TYPE") Byte type, //
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题") String title, //
-			@P(t = "数据（JSON）") String data//
+			@P(t = "数据（JSON）") String data, //
+			@P(t = "文本信息") String text //
 	) throws Exception {
 		Long upUserId = userId;
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			Content cnt = contentService.createContentDraft(conn, type, upUserId, upChannelId, title, data);
-			return APIResponse.getNewSuccessResp(cnt);
+			return APIResponse.getNewSuccessResp(
+					contentService.createContentDraft(client, module, type, upUserId, upChannelId, title, data, text));
 		}
 	}
 
@@ -80,17 +83,19 @@ public class ContentController extends Controller {
 	)
 	public APIResponse createContentPublished(//
 			@P(t = "用户编号") Long userId, //
+			@P(t = "用户编号") String module, //
 			@P(t = "内容类型Content.TYPE") Byte type, //
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题") String title, //
-			@P(t = "数据（JSON）") String data//
+			@P(t = "数据（JSON）") String data, //
+			@P(t = "文本信息") String text //
 	) throws Exception {
 		Long upUserId = userId;
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			Content cnt = contentService.createContentPublished(conn, type, upUserId, upChannelId, title, data);
-			return APIResponse.getNewSuccessResp(cnt);
+			return APIResponse.getNewSuccessResp(contentService.createContentPublished(client, module, type, upUserId,
+					upChannelId, title, data, text));
 		}
 	}
 
@@ -102,15 +107,17 @@ public class ContentController extends Controller {
 			ret = "影响的记录行数"//
 	)
 	public APIResponse delContentById(//
+
 			@P(t = "用户编号") Long userId, //
+			@P(t = "片区编号") String id, //
 			@P(t = "内容编号") Long contentId //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			Content content = contentService.auth(conn, contentId);// content鉴权
-
-			return APIResponse.getNewSuccessResp(contentService.delContentById(conn, contentId));
+			contentService.auth(conn, client, contentId);// content鉴权
+			contentService.delContentById(client, id, contentId);
+			return APIResponse.getNewSuccessResp();
 		}
 	}
 
@@ -129,7 +136,7 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			Content content = contentService.auth(conn, contentId);// content鉴权
+			contentService.auth(conn, client, contentId);// content鉴权
 
 			contentService.addContentTag(conn, contentId, groupKeyword, tag);
 
@@ -146,6 +153,7 @@ public class ContentController extends Controller {
 	)
 	public APIResponse delContentTag(//
 			@P(t = "用户编号") Long userId, //
+			@P(t = "片区编号") String id, //
 			@P(t = "内容编号") Long contentId, //
 			@P(t = "标签分组关键字") String groupKeyword, //
 			@P(t = "标签") String tag//
@@ -153,9 +161,9 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			Content content = contentService.auth(conn, contentId);// content鉴权
-
-			return APIResponse.getNewSuccessResp(contentService.delContentTag(conn, contentId, groupKeyword, tag));
+			contentService.auth(conn, client, contentId);// content鉴权
+			contentService.delContentTag(client, id, contentId, groupKeyword);
+			return APIResponse.getNewSuccessResp();
 		}
 	}
 
@@ -174,18 +182,14 @@ public class ContentController extends Controller {
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题", r = false) String title, //
 			@P(t = "标签分组关键字", r = false) String groupKeyword, //
-			@P(t = "标签列表（JSONArray）", r = false) JSONArray tags, //
 			@P(t = "数量") Integer count, //
 			@P(t = "偏移量") Integer offset//
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			String[] strTags = CodecUtils.convertJSONArray2StringArray(tags);
-			List<Content> ret = contentService.queryContentsByTags(conn, contentType, status, upUserId, upChannelId,
-					groupKeyword, strTags, count, offset);
-
-			return APIResponse.getNewSuccessResp(ret);
+			return APIResponse.getNewSuccessResp(contentService.queryContentsByTags(client, contentType, status,
+					upUserId, upChannelId, groupKeyword, count, offset));
 		}
 	}
 
@@ -210,8 +214,8 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			List<Content> ret = contentService.searchContentsByKeyword(conn, contentType, status, upUserId, upChannelId,
-					keyword, count, offset);
+			List<Content1> ret = contentService.searchContentsByKeyword(conn, contentType, status, upUserId,
+					upChannelId, keyword, count, offset);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}
@@ -227,14 +231,14 @@ public class ContentController extends Controller {
 	)
 	public APIResponse getContentById(//
 			@P(t = "用户编号") Long userId, //
+			@P(t = "片区编号") String id, //
 			@P(t = "内容编号") Long contentId//
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			Content ret = contentService.getContentById(conn, contentId);
-
-			return APIResponse.getNewSuccessResp(ServiceUtils.checkNull(ret));
+			return APIResponse
+					.getNewSuccessResp(ServiceUtils.checkNull(contentService.getContentById(client, id, contentId)));
 		}
 	}
 
@@ -254,9 +258,7 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			JSONArray ret = contentService.getContentTagsById(conn, contentId, groupKeyword);
-
-			return APIResponse.getNewSuccessResp(ret);
+			return APIResponse.getNewSuccessResp(contentService.getContentTagsById(client, contentId, groupKeyword));
 		}
 	}
 
@@ -278,7 +280,7 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			ContentTag ret = contentTagService.createTag(conn, groupKeyword, name);
+			ContentTag1 ret = contentTagService.createTag(conn, groupKeyword, name);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}
@@ -320,7 +322,7 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			List<ContentTag> ret = contentTagService.getTags(conn, status, groupKeyword, count, offset);
+			List<ContentTag1> ret = contentTagService.getTags(conn, status, groupKeyword, count, offset);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}
@@ -341,7 +343,7 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			ContentTagGroup ret = contentTagService.createTagGroup(conn, type, keyword, remark);
+			ContentTagGroup1 ret = contentTagService.createTagGroup(conn, type, keyword, remark);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}

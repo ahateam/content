@@ -4,7 +4,7 @@ package xhj.cn.start;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 
-import zyxhj.cms.domain.Content;
+import zyxhj.cms.domain.Content1;
 import zyxhj.utils.data.DataSource;
 import zyxhj.utils.data.rds.RDSUtils;
 
@@ -25,7 +25,7 @@ public class ContentTest {
 
 			// RDSUtils.dropTableByEntity(dds, Tunnel.class);
 
-			RDSUtils.createTableByEntity(dds, Content.class);
+			RDSUtils.createTableByEntity(dds, Content1.class);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

@@ -9,7 +9,7 @@ import zyxhj.utils.data.rds.RDSAnnID;
  * 通用标签
  */
 @RDSAnnEntity(alias = "tb_cms_content_tag_group")
-public class ContentTagGroup {
+public class ContentTagGroup1 {
 
 	/**
 	 * 大类

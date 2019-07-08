@@ -11,7 +11,7 @@ import zyxhj.utils.data.rds.RDSAnnIndex;
  * 通用标签
  */
 @RDSAnnEntity(alias = "tb_cms_content_tag")
-public class ContentTag {
+public class ContentTag1 {
 
 	public static enum STATUS implements ENUMVALUE {
 		DISABLED((byte) 0, "禁用"), //

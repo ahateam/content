@@ -12,7 +12,7 @@ import zyxhj.utils.data.rds.RDSAnnID;
  * 单个的内容实体
  */
 @RDSAnnEntity(alias = "tb_cms_content")
-public class Content {
+public class Content1 {
 
 	public static enum TYPE implements ENUMVALUE {
 		ALBUM((byte) 0, "相册"), //
