@@ -7,11 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 
-import zyxhj.cms.domain.Content1;
 import zyxhj.cms.domain.ContentTag1;
 import zyxhj.cms.domain.ContentTagGroup1;
+import zyxhj.cms.domian.Content;
 import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
 import zyxhj.core.domain.User;
@@ -44,10 +45,10 @@ public class ContentController extends Controller {
 	}
 
 	@ENUM(des = "内容类型")
-	public Content1.TYPE[] contentTypes = Content1.TYPE.values();
+	public Content.TYPE[] contentTypes = Content.TYPE.values();
 
 	@ENUM(des = "内容状态")
-	public Content1.STATUS[] contentStatus = Content1.STATUS.values();
+	public Content.STATUS[] contentStatus = Content.STATUS.values();
 
 	/**
 	 * 
@@ -214,7 +215,7 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			List<Content1> ret = contentService.searchContentsByKeyword(conn, contentType, status, upUserId,
+			JSONObject ret = contentService.searchContentsByKeyword(client, contentType, status, upUserId,
 					upChannelId, keyword, count, offset);
 
 			return APIResponse.getNewSuccessResp(ret);

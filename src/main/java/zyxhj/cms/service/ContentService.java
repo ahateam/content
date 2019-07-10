@@ -14,7 +14,6 @@ import com.alicloud.openservices.tablestore.model.Column;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
 import com.alicloud.openservices.tablestore.model.search.SearchQuery;
 
-import zyxhj.cms.domain.Content1;
 import zyxhj.cms.domian.Content;
 import zyxhj.cms.repository.ContentRepository;
 import zyxhj.utils.IDUtils;
@@ -132,12 +131,15 @@ public class ContentService {
 	/**
 	 * 根据关键字搜索内容
 	 */
-	public List<Content1> searchContentsByKeyword(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
+	public JSONObject searchContentsByKeyword(SyncClient client, Byte type, Byte status, Long upUserId,
 			Long upChannelId, String keywords, Integer count, Integer offset) throws Exception {
-//		return contentRepository.searchContentsByKeyword(conn, type, status, upUserId, upChannelId, keywords, count,
-//				offset);
-		// TODO 模糊查询暂时未完成
-		return null;
+		TSQL ts = new TSQL();
+		ts.Term(OP.AND, "type", type).Term(OP.AND, "status", status).Term(OP.AND, "upUserId", upUserId)
+				.Term(OP.AND, "upChannelId", upChannelId).Match(OP.AND, "title", keywords);
+		ts.setLimit(count);
+		ts.setOffset(offset);
+		SearchQuery query = ts.build();
+		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
 	}
 
 	/**
@@ -154,8 +156,6 @@ public class ContentService {
 		SearchQuery query = ts.build();
 		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
 
-//		return contentRepository.queryContentsByTags(conn, type, status, upUserId, upChannelId, groupKeyword, tags,
-//				count, offset);
 	}
 
 	/**
@@ -199,7 +199,11 @@ public class ContentService {
 		cb.add("tags", "{}");
 		List<Column> columns = cb.build();
 		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, columns);
-
 	}
+	
+	
+	/**
+	 * 
+	 */
 
 }

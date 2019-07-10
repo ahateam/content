@@ -9,7 +9,6 @@ import com.alibaba.druid.pool.DruidPooledConnection;
 
 import zyxhj.cms.domain.Channel;
 import zyxhj.cms.repository.ChannelRepository;
-import zyxhj.cms.repository.ChannelUserRepository;
 import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
 
@@ -18,12 +17,10 @@ public class ChannelService {
 	private static Logger log = LoggerFactory.getLogger(ChannelService.class);
 
 	private ChannelRepository channelRepository;
-	private ChannelUserRepository channelUserRepository;
 
 	public ChannelService() {
 		try {
 			channelRepository = Singleton.ins(ChannelRepository.class);
-			channelUserRepository = Singleton.ins(ChannelUserRepository.class);
 
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);

@@ -50,7 +50,6 @@ public class Content1Repository extends RDSRepository<Content1> {
 		sql.ANDValid("up_channel_id=?", upChannelId);
 
 		sql.fillSQL(sb);
-
 		return getListByTagsJSONArray(conn, "tags", groupKeyword, tags, sb.toString(), sql.getParams(), count, offset);
 	}
 
