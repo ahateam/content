@@ -34,7 +34,7 @@ public class ContentController extends Controller {
 	public ContentController(String node) {
 		super(node);
 		try {
-			dds = DataSource.getDruidDataSource("rdsDefault");
+			dds = DataSource.getDruidDataSource("rdsDefault.prop");
 			client = DataSource.getTableStoreSyncClient("tsDefault.prop");
 
 			contentService = Singleton.ins(ContentService.class);

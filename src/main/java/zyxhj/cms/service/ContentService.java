@@ -8,10 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.Column;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
+import com.alicloud.openservices.tablestore.model.PrimaryKeyValue;
 import com.alicloud.openservices.tablestore.model.search.SearchQuery;
 
 import zyxhj.cms.domian.Content;
@@ -25,6 +27,7 @@ import zyxhj.utils.data.ts.PrimaryKeyBuilder;
 import zyxhj.utils.data.ts.TSQL;
 import zyxhj.utils.data.ts.TSQL.OP;
 import zyxhj.utils.data.ts.TSRepository;
+import zyxhj.utils.data.ts.TSUtils;
 
 public class ContentService {
 
@@ -64,12 +67,14 @@ public class ContentService {
 	private Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId,
 			Long upChannelId, String title, String data, String text) throws Exception {
 
+		Long id = IDUtils.getSimpleId();
 		Content c = new Content();
 
-		c.id = IDUtils.getSimpleId();
+		c._id = TSUtils.get_id(id);
+		c.id = id;
 
 		c.module = module;
-		c.type = type.toString();
+		c.type = (long) type;
 		if (status == Content.STATUS.DRAFT.v() || status == Content.STATUS.NORMAL.v()) {
 			c.status = (long) status;
 		} else {
@@ -88,7 +93,8 @@ public class ContentService {
 		}
 		c.text = text;
 		c.tags = "{}";// 设置为JSON数组的空格式，否则后续的编辑操作会没效果（可能是MYSQL的bug）
-
+		c.paymentOrNot = 0L;
+		c.ext = "";
 		contentRepository.insert(client, c, false);
 
 		return c;
@@ -129,12 +135,26 @@ public class ContentService {
 	}
 
 	/**
+	 * 类容列表
+	 */
+	public JSONArray getContents(SyncClient client, Integer count, Integer offset) throws Exception {
+
+		PrimaryKey pkStart = new PrimaryKeyBuilder().add("_id", PrimaryKeyValue.INF_MIN)
+				.add("id", PrimaryKeyValue.INF_MIN).build();
+
+		PrimaryKey pkEnd = new PrimaryKeyBuilder().add("_id", PrimaryKeyValue.INF_MAX)
+				.add("id", PrimaryKeyValue.INF_MAX).build();
+
+		return TSRepository.nativeGetRange(client, contentRepository.getTableName(), pkStart, pkEnd, count, offset);
+	}
+
+	/**
 	 * 根据关键字搜索内容
 	 */
 	public JSONObject searchContentsByKeyword(SyncClient client, Byte type, Byte status, Long upUserId,
 			Long upChannelId, String keywords, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "type", type).Term(OP.AND, "status", status).Term(OP.AND, "upUserId", upUserId)
+		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) status).Term(OP.AND, "upUserId", upUserId)
 				.Term(OP.AND, "upChannelId", upChannelId).Match(OP.AND, "title", keywords);
 		ts.setLimit(count);
 		ts.setOffset(offset);
@@ -148,9 +168,8 @@ public class ContentService {
 	public JSONObject queryContentsByTags(SyncClient client, Byte type, Byte status, Long upUserId, Long upChannelId,
 			String groupKeyword, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "type", type).Term(OP.AND, "status", (long) status).Term(OP.AND, "upUserId", upUserId)
-				.Term(OP.AND, "upChannelId", upChannelId).Term(OP.AND, "type", type)
-				.Match(OP.AND, "tags", groupKeyword);
+		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) status).Term(OP.AND, "upUserId", upUserId)
+				.Term(OP.AND, "upChannelId", upChannelId).MatchPhrase(OP.AND, "tags", groupKeyword);
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
@@ -200,8 +219,7 @@ public class ContentService {
 		List<Column> columns = cb.build();
 		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, columns);
 	}
-	
-	
+
 	/**
 	 * 
 	 */
