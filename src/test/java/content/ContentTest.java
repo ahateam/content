@@ -3,25 +3,15 @@ package content;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-
-import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.alibaba.druid.pool.DruidPooledConnection;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 
 import zyxhj.cms.service.ContentService;
-import zyxhj.flow.domain.TableSchema;
-import zyxhj.flow.service.FlowService;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.data.DataSource;
 
@@ -29,7 +19,6 @@ public class ContentTest {
 
 	private static DruidPooledConnection conn;
 
-	private static FlowService flowService;
 	private static ContentService contentService;
 	private static SyncClient client;
 
@@ -106,7 +95,6 @@ public class ContentTest {
 			conn = DataSource.getDruidDataSource("rdsDefault.prop").getConnection();
 			client = DataSource.getTableStoreSyncClient("tsDefault.prop");
 
-			flowService = Singleton.ins(FlowService.class);
 			contentService = Singleton.ins(ContentService.class);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -128,7 +116,7 @@ public class ContentTest {
 
 	private static final Long contentId = 400197074746052L;
 
-//	@Test
+	@Test
 	public void testCreateContentDraft() {
 		Byte type = 1;
 		String title = "一棵树";
@@ -142,7 +130,7 @@ public class ContentTest {
 		}
 	}
 
-//	@Test
+	@Test
 	public void testCreateContentPublished() {
 		Byte type = 1;
 		String title = "一棵树";
@@ -165,7 +153,7 @@ public class ContentTest {
 			e.printStackTrace();
 		}
 	}
-
+//
 //	@Test
 	public void getContentById() {
 
@@ -189,7 +177,7 @@ public class ContentTest {
 		}
 	}
 
-	@Test
+//	@Test
 	public void queryContentsByTags() {
 
 		Byte type = 1;
@@ -216,8 +204,8 @@ public class ContentTest {
 		Integer offset = 0;
 
 		try {
-			System.out.println(contentService.searchContentsByKeyword(client, type, status, upUserId, upChannelId, keywords, count,
-					offset));
+			System.out.println(contentService.searchContentsByKeyword(client, type, status, upUserId, upChannelId,
+					keywords, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -234,9 +222,5 @@ public class ContentTest {
 			e.printStackTrace();
 		}
 	}
-	
-	
-	
-	
 
 }

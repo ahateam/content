@@ -10,8 +10,8 @@ import com.alibaba.druid.pool.DruidPooledConnection;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
-import zyxhj.cms.domain.ContentTag1;
-import zyxhj.cms.domain.ContentTagGroup1;
+import zyxhj.cms.domian.ContentTag;
+import zyxhj.cms.domian.ContentTagGroup;
 import zyxhj.cms.repository.ContentTagGroupRepository;
 import zyxhj.cms.repository.ContentTagRepository;
 import zyxhj.utils.IDUtils;
@@ -25,7 +25,7 @@ public class ContentTagService {
 
 	private static Logger log = LoggerFactory.getLogger(ContentTagService.class);
 
-	private static Cache<Long, ContentTag1> CONTENT_TAG_CACHE = CacheBuilder.newBuilder()//
+	private static Cache<Long, ContentTag> CONTENT_TAG_CACHE = CacheBuilder.newBuilder()//
 			.expireAfterAccess(5, TimeUnit.MINUTES)//
 			.maximumSize(1000)//
 			.build();
@@ -45,10 +45,12 @@ public class ContentTagService {
 	/**
 	 * 创建自定义角色
 	 */
-	public ContentTag1 createTag(DruidPooledConnection conn, String groupKeyword, String name) throws Exception {
-		ContentTag1 tag = new ContentTag1();
+	public ContentTag createTag(DruidPooledConnection conn, Long groupId, String groupKeyword, String name)
+			throws Exception {
+		ContentTag tag = new ContentTag();
 		tag.id = IDUtils.getSimpleId();
-		tag.status = ContentTag1.STATUS.ENABLED.v();
+		tag.groupId = groupId;
+		tag.status = ContentTag.STATUS.ENABLED.v();
 		tag.groupKeyword = groupKeyword;
 		tag.name = name;
 
@@ -61,11 +63,11 @@ public class ContentTagService {
 	 * 启用/禁用标签
 	 */
 	public int editTagStatus(DruidPooledConnection conn, Long tagId, Byte status) throws Exception {
-		ContentTag1 renew = new ContentTag1();
-		if (status == ContentTag1.STATUS.DISABLED.v()) {
+		ContentTag renew = new ContentTag();
+		if (status == ContentTag.STATUS.DISABLED.v()) {
 			renew.status = status;
 		} else {
-			renew.status = ContentTag1.STATUS.ENABLED.v();
+			renew.status = ContentTag.STATUS.ENABLED.v();
 		}
 
 		return tagRepository.updateByKey(conn, "id", tagId, renew, true);
@@ -74,7 +76,7 @@ public class ContentTagService {
 	/**
 	 * 根据状态获取标签列表
 	 */
-	public List<ContentTag1> getTags(DruidPooledConnection conn, Byte status, String groupKeyword, Integer count,
+	public List<ContentTag> getTags(DruidPooledConnection conn, Byte status, String groupKeyword, Integer count,
 			Integer offset) throws Exception {
 		return tagRepository.getListByANDKeys(conn, new String[] { "status", "group_keyword" },
 				new Object[] { status, groupKeyword }, count, offset);
@@ -83,9 +85,9 @@ public class ContentTagService {
 	/**
 	 * 根据编号获取自定义标签
 	 */
-	public ContentTag1 getTagById(DruidPooledConnection conn, Long orgId, Long tagId) throws Exception {
+	public ContentTag getTagById(DruidPooledConnection conn, Long tagId) throws Exception {
 		// 先从系统缓存里取，再从缓存去，最后再查
-		ContentTag1 tag = CONTENT_TAG_CACHE.getIfPresent(tagId);
+		ContentTag tag = CONTENT_TAG_CACHE.getIfPresent(tagId);
 		if (tag == null) {
 			// 从数据库中获取
 			tag = tagRepository.getByKey(conn, "id", tagId);
@@ -100,10 +102,11 @@ public class ContentTagService {
 	/**
 	 * 创建内容标签分组(不允许编辑和删除,纯粹用于管理标签)
 	 */
-	public ContentTagGroup1 createTagGroup(DruidPooledConnection conn, String type, String keyword, String remark)
+	public ContentTagGroup createTagGroup(DruidPooledConnection conn, String type, String keyword, String remark)
 			throws Exception {
 
-		ContentTagGroup1 group = new ContentTagGroup1();
+		ContentTagGroup group = new ContentTagGroup();
+		group.id = IDUtils.getSimpleId();
 		group.type = type;
 		group.keyword = keyword;
 		group.remark = remark;
@@ -116,8 +119,9 @@ public class ContentTagService {
 	/**
 	 * 获取标签分组类型列表
 	 */
-	public List<String> getTagGroupTypes(DruidPooledConnection conn) throws Exception {
-		return groupRepository.getContentTagGroupTypes(conn);
+	public List<ContentTagGroup> getTagGroupTypes(DruidPooledConnection conn) throws Exception {
+//		return groupRepository.getContentTagGroupTypes(conn);
+		return groupRepository.getList(conn, 512, 0);
 	}
 
 }
