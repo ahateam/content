@@ -65,7 +65,7 @@ public class ContentService {
 	}
 
 	private Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId,
-			Long upChannelId, String title, String data, String text) throws Exception {
+			Long upChannelId, String title, String tags, String data) throws Exception {
 
 		Long id = IDUtils.getSimpleId();
 		Content c = new Content();
@@ -91,9 +91,9 @@ public class ContentService {
 		} else {
 			c.data = data;
 		}
-		c.text = text;
-		c.tags = "{}";// 设置为JSON数组的空格式，否则后续的编辑操作会没效果（可能是MYSQL的bug）
-		c.paymentOrNot = 0L;
+		c.proviteData = "{}";
+		c.tags = tags;// 设置为JSON数组的空格式，否则后续的编辑操作会没效果（可能是MYSQL的bug）
+		c.paid = 0L;
 		c.ext = "";
 		contentRepository.insert(client, c, false);
 
@@ -104,16 +104,16 @@ public class ContentService {
 	 * 创建内容（默认为草稿）
 	 */
 	public Content createContentDraft(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title, String data, String text) throws Exception {
-		return addContent(client, module, type, Content.STATUS.DRAFT.v(), upUserId, upChannelId, title, data, text);
+			String title, String tags, String data) throws Exception {
+		return addContent(client, module, type, Content.STATUS.DRAFT.v(), upUserId, upChannelId, title, tags, data);
 	}
 
 	/**
 	 * 创建内容（默认为正常状态，已发布）
 	 */
 	public Content createContentPublished(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title, String data, String text) throws Exception {
-		return addContent(client, module, type, Content.STATUS.NORMAL.v(), upUserId, upChannelId, title, data, text);
+			String title, String tags, String data) throws Exception {
+		return addContent(client, module, type, Content.STATUS.NORMAL.v(), upUserId, upChannelId, title, tags, data);
 	}
 
 	/**
@@ -148,6 +148,15 @@ public class ContentService {
 		return TSRepository.nativeGetRange(client, contentRepository.getTableName(), pkStart, pkEnd, count, offset);
 	}
 
+	public JSONObject getContentByType(SyncClient client, Byte type, Integer count, Integer offset) throws Exception {
+		TSQL ts = new TSQL();
+		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v());
+		ts.setLimit(count);
+		ts.setOffset(offset);
+		SearchQuery query = ts.build();
+		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
+	}
+
 	/**
 	 * 根据关键字搜索内容
 	 */
@@ -165,16 +174,16 @@ public class ContentService {
 	/**
 	 * 根据标签查询内容
 	 */
-	public JSONObject queryContentsByTags(SyncClient client, Byte type, Byte status, Long upUserId, Long upChannelId,
-			String groupKeyword, Integer count, Integer offset) throws Exception {
+	public JSONObject queryContentsByTags(SyncClient client, String module, Byte type, Byte status, String groupKeyword,
+			Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) status).Term(OP.AND, "upUserId", upUserId)
-				.Term(OP.AND, "upChannelId", upChannelId).MatchPhrase(OP.AND, "tags", groupKeyword);
+		ts.Terms(OP.AND, "module", module).Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) status)
+				.Terms(OP.AND, "tags", groupKeyword);
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
+//		return contentRepository.search(client, "ContentIndex", query);
 		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
-
 	}
 
 	/**
@@ -197,15 +206,17 @@ public class ContentService {
 		ColumnBuilder cb = new ColumnBuilder();
 		cb.add("tags", groupKeyword);
 		List<Column> columns = cb.build();
-		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, columns);
+		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, true, columns);
 	}
 
 	/**
 	 * 为内容添加标签
 	 */
-	public void addContentTag(DruidPooledConnection conn, Long contentId, String groupKeyword, String tag)
+	public void addContentTag(DruidPooledConnection conn, String _id, Long contentId, String groupKeyword, String tag)
 			throws Exception {
-
+//		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", contentId).build();
+//		ColumnBuilder cb = new ColumnBuilder();
+//		cb.add("tags", groupKeyword);
 //		return contentRepository.addContentTag(conn, contentId, groupKeyword, tag);
 	}
 
@@ -217,7 +228,7 @@ public class ContentService {
 		ColumnBuilder cb = new ColumnBuilder();
 		cb.add("tags", "{}");
 		List<Column> columns = cb.build();
-		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, columns);
+		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, true, columns);
 	}
 
 	/**

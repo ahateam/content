@@ -106,21 +106,21 @@ public class ContentTest {
 		conn.close();
 	}
 
-	private static final Long upUserId = 400159699711499L;
+	private static final Long upUserId = 1234567890L;
 
-	private static final Long upChannelId = 400159711950692L;
+	private static final Long upChannelId = 400353274527014L;
 
-	private static final String module = "400159724862966";
+	private static final String module = "kkqt";
 
-	private static final String id = "16bf";
+	private static final String id = "16c0";
 
 	private static final Long contentId = 400197074746052L;
 
-	@Test
+//	@Test
 	public void testCreateContentDraft() {
 		Byte type = 1;
 		String title = "一棵树";
-		String data = "{url:xxxxx}";
+		String data = "{}";
 		String text = "第一次创建内容  默认为草稿";
 
 		try {
@@ -132,13 +132,13 @@ public class ContentTest {
 
 	@Test
 	public void testCreateContentPublished() {
-		Byte type = 1;
-		String title = "一棵树";
-		String data = "{url:xxxxx}";
-		String text = "第一次创建内容  默认为正常状态  已发布";
+		Byte type = 3;
+		String title = "第四堂课";
+		String data = "{\"show\":0,\"text\":\"猜猜猜猜猜擦此案猜猜猜才\",\"url\":\"http://127.0.0.1:20002/static/temVideos/c9c277d2ad5785c6764290d0c7d8df6c.mp4\"}";
+		String tags = "[\"夸夸\"]";
 
 		try {
-			contentService.createContentPublished(client, module, type, upUserId, upChannelId, title, data, text);
+			contentService.createContentPublished(client, module, type, upUserId, upChannelId, title,tags, data);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -180,15 +180,15 @@ public class ContentTest {
 //	@Test
 	public void queryContentsByTags() {
 
-		Byte type = 1;
-		Byte status = 0;
-		String groupKeyword = "第一";
+		Byte type = 3;
+		Byte status = 1;
+		String groupKeyword = "心灵鸡汤";
+		String module = "234";
 		Integer count = 10;
 		Integer offset = 0;
 
 		try {
-			System.out.println(contentService.queryContentsByTags(client, type, status, upUserId, upChannelId,
-					groupKeyword, count, offset));
+			System.out.println(contentService.queryContentsByTags(client,module, type, status,groupKeyword, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
