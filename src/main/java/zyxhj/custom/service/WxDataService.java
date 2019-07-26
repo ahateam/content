@@ -20,8 +20,6 @@ public class WxDataService {
 			wxMpConfigStorage = new WxMpInMemoryConfigStorage();
 			wxMpConfigStorage.setAppId(WxDataService.APPID); // APPid
 			wxMpConfigStorage.setSecret(WxDataService.APPSECRET); // AppSecret
-			wxMpConfigStorage.setToken(WxDataService.TOKEN); // 设置微信公众号的token
-			wxMpConfigStorage.setAesKey(WxDataService.AESKEY); // 设置微信公众号的EncodingAESKey
 			wxMpService = new WxMpServiceImpl();
 			wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
 		} catch (Exception e) {
@@ -29,10 +27,8 @@ public class WxDataService {
 		}
 	}
 
-	public static final String APPID = "wx547972e25ec85006";
-	public static final String APPSECRET = "0406d93e33c3400e3b4b673ea86a2679";
-	public static final String TOKEN = "wx3ch";
-	public static final String AESKEY = "XZ2ZdYwchouGBDzZEzpAJEKdAqTwKrcwiOMP7n2cNDJ";
+	public static final String APPID = "wxab27851c2563890e";
+	public static final String APPSECRET = "dd3aaa313ec78540310ed1086ad76c7f";
 
 	public WxMpInMemoryConfigStorage getWxMpConfigStorage() {
 		return wxMpConfigStorage;

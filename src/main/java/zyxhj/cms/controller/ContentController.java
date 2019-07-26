@@ -1,5 +1,7 @@
 package zyxhj.cms.controller;
 
+import java.util.Date;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +16,7 @@ import zyxhj.cms.domian.ContentTagGroup;
 import zyxhj.cms.service.ChannelService;
 import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
+import zyxhj.cms.service.TaskWallService;
 import zyxhj.core.domain.User;
 import zyxhj.kkqt.domain.TaskList;
 import zyxhj.kkqt.domain.TaskWall;
@@ -32,6 +35,7 @@ public class ContentController extends Controller {
 	private ContentService contentService;
 	private ContentTagService contentTagService;
 	private ChannelService channelService;
+	private TaskWallService taskWallService;
 
 	public ContentController(String node) {
 		super(node);
@@ -42,6 +46,7 @@ public class ContentController extends Controller {
 			contentService = Singleton.ins(ContentService.class);
 			contentTagService = Singleton.ins(ContentTagService.class);
 			channelService = Singleton.ins(ChannelService.class);
+			taskWallService = Singleton.ins(TaskWallService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -349,11 +354,12 @@ public class ContentController extends Controller {
 	)
 	public APIResponse createContentTag(//
 			@P(t = "标签分组关键字") String groupKeyword, //
+			@P(t = "隶属") String module, //
 			@P(t = "标签名称") String name //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			ContentTag ret = contentTagService.createTag(client, groupKeyword, name);
+			ContentTag ret = contentTagService.createTag(client, module, groupKeyword, name);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}
@@ -388,13 +394,15 @@ public class ContentController extends Controller {
 	)
 	public APIResponse getContentTag(//
 			@P(t = "状态") Byte status, //
+			@P(t = "隶属") String module, //
 			@P(t = "标签分组id") String keyword, //
 			Integer count, //
 			Integer offset//
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			return APIResponse.getNewSuccessResp(contentTagService.getTags(client, status, keyword, count, offset));
+			return APIResponse
+					.getNewSuccessResp(contentTagService.getTags(client, module, status, keyword, count, offset));
 		}
 	}
 
@@ -435,6 +443,27 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			return APIResponse.getNewSuccessResp(contentTagService.getTagGroupTypes(client, module, tagGroupType));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTags", //
+			des = "获取标签", //
+			ret = "标签列表"//
+	)
+	public APIResponse getTags(//
+			@P(t = "隶属") String module, //
+			@P(t = "标签状态") Byte status, //
+			@P(t = "标签") String keyword, //
+			Integer count, //
+			Integer offset //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse
+					.getNewSuccessResp(contentTagService.getTags(client, module, status, keyword, count, offset));
 		}
 	}
 
@@ -586,10 +615,198 @@ public class ContentController extends Controller {
 					.getNewSuccessResp(channelService.getChannelByTags(client, module, status, tags, count, offset));
 		}
 	}
-	
-	
-	
-	
-	
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// 任务墙
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "createTask", //
+			des = "创建任务", //
+			ret = "任务"//
+	)
+	public APIResponse createTask(//
+			@P(t = "隶属") String module, //
+			@P(t = "任务类型") Byte type, //
+			@P(t = "任务等级") Byte level, //
+			@P(t = "需求") String needs, //
+			@P(t = "创建Id") Long upUsreId, //
+			@P(t = "任务时间") Date time, //
+			@P(t = "地区", r = false) String pos, //
+			@P(t = "需求标题") String title, //
+			@P(t = "需求金额") Double money, //
+			@P(t = "需求详细") String detail, //
+			@P(t = "任务参与人数") Byte accessStatus, //
+			@P(t = "标签") String tags //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(taskWallService.createTaskWallPublished(client, module, type, level,
+					needs, upUsreId, time, pos, title, tags, money, detail, accessStatus));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "editTaskWallStatus", //
+			des = "修改任务状态", //
+			ret = ""//
+	)
+	public APIResponse editTaskWallStatus(//
+			@P(t = "任务分片编号") String _id, //
+			@P(t = "任务id") Long taskWallId, //
+			@P(t = "状态") Byte status //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			taskWallService.editTaskListStatus(client, _id, taskWallId, status);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTask", //
+			des = "根据标签/类型/状态获取任务", //
+			ret = "任务列表"//
+	)
+	public APIResponse getTaskByTag(//
+			@P(t = "隶属") String module, //
+			@P(t = "状态  如无此条件  为null", r = false) Byte status, //
+			@P(t = "类型  如无此条件  为null", r = false) Byte type, //
+			@P(t = "标签  如无此条件  为null", r = false) String tags, //
+			Integer count, //
+			Integer offset//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse
+					.getNewSuccessResp(taskWallService.getTaskByTag(client, module, type, status, tags, count, offset));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTaskById", //
+			des = "获取任务详情", //
+			ret = "任务列表"//
+	)
+	public APIResponse getTaskById(//
+			@P(t = "任务分片编号") String _id, //
+			@P(t = "任务id") Long taskWallId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(taskWallService.getTaskById(client, _id, taskWallId));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "delTaskById", //
+			des = "删除任务", //
+			ret = ""//
+	)
+	public APIResponse delTaskById(//
+
+			@P(t = "任务分片编号") String _id, //
+			@P(t = "任务id") Long taskWallId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			taskWallService.delTaskById(client, _id, taskWallId);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTaskByUpUserId", //
+			des = "用户根据状态/类型获取自己的发布列表", //
+			ret = "任务列表"//
+	)
+	public APIResponse getTaskByUpUserId(//
+			@P(t = "隶属") String module, //
+			@P(t = "用户编号") Long upUserId, //
+			@P(t = "状态  如无此条件  为null", r = false) Byte status, //
+			@P(t = "类型  如无此条件  为null", r = false) Byte type, //
+			Integer count, //
+			Integer offset//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(
+					taskWallService.getTaskByUpUserId(client, module, upUserId, type, status, count, offset));
+		}
+	}
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//任务接取
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "acceptanceTask", //
+			des = "接取任务", //
+			ret = "任务"//
+	)
+	public APIResponse acceptanceTask(//
+			@P(t = "隶属") String module, //
+			@P(t = "接取人id") Long accUserId, //
+			@P(t = "状态") Byte status, //
+			@P(t = "任务类型") Byte type, //
+			@P(t = "任务标题") String taskTitle, //
+			@P(t = "任务分片编号") String task_id, //
+			@P(t = "任务id") Long taksId, //
+			@P(t = "上传者用户编号") Long upUserId, //
+			@P(t = "任务人数 （单人   多人）") Byte accessStatus, //
+			@P(t = "私密信息") String proviteData //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(taskWallService.acceptanceTask(client, module, accUserId, type,
+					taskTitle, task_id, taksId, upUserId, accessStatus, proviteData));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTaskList", //
+			des = " 根据任务状态或类型查询任务", //
+			ret = "任务列表"//
+	)
+	public APIResponse getTaskListByTypeAndStatus(//
+			@P(t = "隶属") String module, //
+			@P(t = "微信openId") Long accUserId, //
+			@P(t = "任务状态   如无此条件  为null", r = false) Byte status, //
+			@P(t = "任务类型  如无此条件  为null", r = false) Byte type, //
+			Integer count, //
+			Integer offset//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(
+					taskWallService.getTaskListByTypeORStatus(client, module, accUserId, type, status, count, offset));
+		}
+	}
 
 }

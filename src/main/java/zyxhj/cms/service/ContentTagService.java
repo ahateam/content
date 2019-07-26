@@ -53,9 +53,9 @@ public class ContentTagService {
 	}
 
 	/**
-	 * 创建自定义角色
+	 * 创建自定义标签
 	 */
-	public ContentTag createTag(SyncClient client, String groupKeyword, String name) throws Exception {
+	public ContentTag createTag(SyncClient client, String module, String groupKeyword, String name) throws Exception {
 		ContentTag tag = new ContentTag();
 
 		Long id = IDUtils.getSimpleId();
@@ -64,6 +64,7 @@ public class ContentTagService {
 		tag.status = (long) ContentTag.STATUS.ENABLED.v();
 		tag.groupKeyword = groupKeyword;
 		tag.name = name;
+		tag.module = module;
 		tagRepository.insert(client, tag, false);
 		return tag;
 	}
@@ -91,10 +92,10 @@ public class ContentTagService {
 	/**
 	 * 根据状态获取标签列表
 	 */
-	public JSONObject getTags(SyncClient client, Byte status, String keyword, Integer count, Integer offset)
-			throws Exception {
+	public JSONObject getTags(SyncClient client, String module, Byte status, String keyword, Integer count,
+			Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "groupKeyword", keyword).Term(OP.AND, "status", (long) status);
+		ts.Term(OP.AND, "module", module).Term(OP.AND, "groupKeyword", keyword).Term(OP.AND, "status", (long) status);
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
@@ -117,8 +118,10 @@ public class ContentTagService {
 		group.type = type;
 		group.keyword = keyword;
 		group.remark = remark;
-		if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.CONTENT.v()) {
-			group.tagGroupType = (long) ContentTagGroup.TAGGROUPTYPE.CONTENT.v();
+		if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.HOME.v()) {
+			group.tagGroupType = (long) ContentTagGroup.TAGGROUPTYPE.HOME.v();
+		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.VIP.v()) {
+			group.tagGroupType = (long) ContentTagGroup.TAGGROUPTYPE.VIP.v();
 		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.TASK.v()) {
 			group.tagGroupType = (long) ContentTagGroup.TAGGROUPTYPE.TASK.v();
 		}

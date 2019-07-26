@@ -24,7 +24,7 @@ public class ContentTest {
 
 			// RDSUtils.dropTableByEntity(dds, Tunnel.class);
 
-//			RDSUtils.createTableByEntity(dds, ContentTagGroup.class);
+			//RDSUtils.createTableByEntity(dds, ContentTagGroup.class);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

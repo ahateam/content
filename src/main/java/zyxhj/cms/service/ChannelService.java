@@ -149,11 +149,5 @@ public class ChannelService {
 
 	}
 
-	/**
-	 * 根据标签和Channel的一些属性，筛选和查询Channel
-	 * 
-	 */
-	public void queryChannels(DruidPooledConnection conn) throws Exception {
-	}
-
+	
 }
