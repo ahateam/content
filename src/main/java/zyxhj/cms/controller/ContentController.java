@@ -18,6 +18,7 @@ import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
 import zyxhj.cms.service.TaskWallService;
 import zyxhj.core.domain.User;
+import zyxhj.core.service.UserService;
 import zyxhj.kkqt.domain.TaskList;
 import zyxhj.kkqt.domain.TaskWall;
 import zyxhj.utils.ServiceUtils;
@@ -36,6 +37,7 @@ public class ContentController extends Controller {
 	private ContentTagService contentTagService;
 	private ChannelService channelService;
 	private TaskWallService taskWallService;
+	private UserService userService;
 
 	public ContentController(String node) {
 		super(node);
@@ -47,6 +49,7 @@ public class ContentController extends Controller {
 			contentTagService = Singleton.ins(ContentTagService.class);
 			channelService = Singleton.ins(ChannelService.class);
 			taskWallService = Singleton.ins(TaskWallService.class);
+			userService = Singleton.ins(UserService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -353,13 +356,14 @@ public class ContentController extends Controller {
 			ret = "所创建的对象"//
 	)
 	public APIResponse createContentTag(//
+			@P(t = "标签分组id") Long groupId, //
 			@P(t = "标签分组关键字") String groupKeyword, //
 			@P(t = "隶属") String module, //
 			@P(t = "标签名称") String name //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			ContentTag ret = contentTagService.createTag(client, module, groupKeyword, name);
+			ContentTag ret = contentTagService.createTag(conn, module, groupId, groupKeyword, name);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}
@@ -374,12 +378,11 @@ public class ContentController extends Controller {
 			ret = "影响的记录行数"//
 	)
 	public APIResponse editContentTagStatus(//
-			@P(t = "分片编号") String _id, //
 			@P(t = "标签编号") Long tagId, //
 			@P(t = "状态") Byte status //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			contentTagService.editTagStatus(client, _id, tagId, status);
+			contentTagService.editTagStatus(conn, tagId, status);
 			return APIResponse.getNewSuccessResp();
 		}
 	}
@@ -402,7 +405,7 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			return APIResponse
-					.getNewSuccessResp(contentTagService.getTags(client, module, status, keyword, count, offset));
+					.getNewSuccessResp(contentTagService.getTags(conn, module, status, keyword, count, offset));
 		}
 	}
 
@@ -423,7 +426,7 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			ContentTagGroup ret = contentTagService.createTagGroup(client, module, tagGroupType, type, keyword, remark);
+			ContentTagGroup ret = contentTagService.createTagGroup(conn, module, tagGroupType, type, keyword, remark);
 
 			return APIResponse.getNewSuccessResp(ret);
 		}
@@ -442,7 +445,7 @@ public class ContentController extends Controller {
 			@P(t = "隶属") String module //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			return APIResponse.getNewSuccessResp(contentTagService.getTagGroupTypes(client, module, tagGroupType));
+			return APIResponse.getNewSuccessResp(contentTagService.getTagGroupTypes(conn, module, tagGroupType));
 		}
 	}
 
@@ -463,7 +466,7 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			return APIResponse
-					.getNewSuccessResp(contentTagService.getTags(client, module, status, keyword, count, offset));
+					.getNewSuccessResp(contentTagService.getTags(conn, module, status, keyword, count, offset));
 		}
 	}
 
@@ -794,9 +797,9 @@ public class ContentController extends Controller {
 			des = " 根据任务状态或类型查询任务", //
 			ret = "任务列表"//
 	)
-	public APIResponse getTaskListByTypeAndStatus(//
+	public APIResponse getTaskList(//
 			@P(t = "隶属") String module, //
-			@P(t = "微信openId") Long accUserId, //
+			@P(t = "用户Id") Long accUserId, //
 			@P(t = "任务状态   如无此条件  为null", r = false) Byte status, //
 			@P(t = "任务类型  如无此条件  为null", r = false) Byte type, //
 			Integer count, //
@@ -806,6 +809,64 @@ public class ContentController extends Controller {
 
 			return APIResponse.getNewSuccessResp(
 					taskWallService.getTaskListByTypeORStatus(client, module, accUserId, type, status, count, offset));
+		}
+	}
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//微信登录
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "loginByWxOpenId", //
+			des = " 微信号登录", //
+			ret = "用户信息"//
+	)
+	public APIResponse loginByWxOpenId(//
+			@P(t = "微信openId") String wxOpenId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(userService.loginByWxOpenId(conn, wxOpenId));
+		}
+	}
+
+	/**
+	 * 修改用户的身份证
+	 */
+	@POSTAPI(//
+			path = "editUserIdNumber", //
+			des = "修改用户的身份证", //
+			ret = "返回修改信息")
+	public APIResponse editUserIdNumber(//
+			@P(t = "管理员编号") Long adminUsreId, //
+			@P(t = "用户编号") Long userId, //
+			@P(t = "用户身份证号码(已添加索引，无需查重）") String IdNumber //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(userService.editUserIdNumber(conn, adminUsreId, userId, IdNumber));
+		}
+	}
+
+	/**
+	 * 修改用户的身份证
+	 */
+	@POSTAPI(//
+			path = "editUserInfo", //
+			des = "修改用户的信息", //
+			ret = "返回修改信息")
+	public APIResponse editUserInfo(//
+			@P(t = "用户编号") Long userId, //
+			@P(t = "用户名", r = false) String name, //
+			@P(t = "电话号码", r = false) String mobile, //
+			@P(t = "邮箱", r = false) String email //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(userService.editUserInfo(conn, userId, name, mobile, email));
 		}
 	}
 
