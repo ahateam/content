@@ -124,13 +124,13 @@ public class ContentTest {
 		String text = "第一次创建内容  默认为草稿";
 
 		try {
-			contentService.createContentDraft(client, text, type, upUserId, upChannelId, title, data, text);
+//			contentService.createContentDraft(client, text, type, upUserId, upChannelId, title, data, text);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	@Test
+//	@Test
 	public void testCreateContentPublished() {
 		Byte type = 3;
 		String title = "第四堂课";
@@ -138,7 +138,7 @@ public class ContentTest {
 		String tags = "[\"夸夸\"]";
 
 		try {
-			contentService.createContentPublished(client, module, type, upUserId, upChannelId, title,tags, data);
+//			contentService.createContentPublished(client, module, type, upUserId, upChannelId, title,tags, data);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -167,11 +167,11 @@ public class ContentTest {
 
 //	@Test
 	public void getContents() {
-
+		String module = "kkqt";
 		Integer count = 10;
 		Integer offset = 0;
 		try {
-			System.out.println(contentService.getContents(client, count, offset));
+			System.out.println(contentService.getContents(conn,client,module, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -18,6 +18,8 @@ import com.alicloud.openservices.tablestore.model.search.SearchQuery;
 
 import zyxhj.cms.domian.Content;
 import zyxhj.cms.repository.ContentRepository;
+import zyxhj.core.domain.User;
+import zyxhj.core.service.UserService;
 import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.BaseRC;
@@ -34,10 +36,12 @@ public class ContentService {
 	private static Logger log = LoggerFactory.getLogger(ContentService.class);
 
 	private ContentRepository contentRepository;
+	private UserService userService;
 
 	public ContentService() {
 		try {
 			contentRepository = Singleton.ins(ContentRepository.class);
+			userService = Singleton.ins(UserService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -65,7 +69,7 @@ public class ContentService {
 	}
 
 	private Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId,
-			Long upChannelId, String title, String tags, String data) throws Exception {
+			Long upChannelId, String title, String data) throws Exception {
 
 		Long id = IDUtils.getSimpleId();
 		Content c = new Content();
@@ -92,7 +96,7 @@ public class ContentService {
 			c.data = data;
 		}
 		c.proviteData = "{}";
-		c.tags = tags;// 设置为JSON数组的空格式，否则后续的编辑操作会没效果（可能是MYSQL的bug）
+		c.tags = "[]";// 设置为JSON数组的空格式，否则后续的编辑操作会没效果（可能是MYSQL的bug）
 		c.paid = 0L;
 		c.ext = "";
 		contentRepository.insert(client, c, false);
@@ -104,16 +108,16 @@ public class ContentService {
 	 * 创建内容（默认为草稿）
 	 */
 	public Content createContentDraft(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title, String tags, String data) throws Exception {
-		return addContent(client, module, type, Content.STATUS.DRAFT.v(), upUserId, upChannelId, title, tags, data);
+			String title,  String data) throws Exception {
+		return addContent(client, module, type, Content.STATUS.DRAFT.v(), upUserId, upChannelId, title, data);
 	}
 
 	/**
 	 * 创建内容（默认为正常状态，已发布）
 	 */
 	public Content createContentPublished(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title, String tags, String data) throws Exception {
-		return addContent(client, module, type, Content.STATUS.NORMAL.v(), upUserId, upChannelId, title, tags, data);
+			String title, String data) throws Exception {
+		return addContent(client, module, type, Content.STATUS.NORMAL.v(), upUserId, upChannelId, title, data);
 	}
 
 	/**
@@ -137,15 +141,21 @@ public class ContentService {
 	/**
 	 * 类容列表
 	 */
-	public JSONArray getContents(SyncClient client, Integer count, Integer offset) throws Exception {
-
-		PrimaryKey pkStart = new PrimaryKeyBuilder().add("_id", PrimaryKeyValue.INF_MIN)
-				.add("id", PrimaryKeyValue.INF_MIN).build();
-
-		PrimaryKey pkEnd = new PrimaryKeyBuilder().add("_id", PrimaryKeyValue.INF_MAX)
-				.add("id", PrimaryKeyValue.INF_MAX).build();
-
-		return TSRepository.nativeGetRange(client, contentRepository.getTableName(), pkStart, pkEnd, count, offset);
+	public JSONArray getContents(DruidPooledConnection conn,SyncClient client,String module, Integer count, Integer offset) throws Exception {
+		
+		TSQL ts = new TSQL();
+		ts.Terms(OP.AND, "module", module).Term(OP.AND, "status",(long) Content.STATUS.NORMAL.v());
+		ts.setLimit(count);
+		ts.setOffset(offset);
+		SearchQuery query = ts.build();
+		JSONObject con = TSRepository.nativeSearch(client,  contentRepository.getTableName(), "ContentIndex", query);
+		JSONArray json = con.getJSONArray("list");
+		for(int i = 0 ; i < json.size() ; i++) {
+			JSONObject j = json.getJSONObject(i);
+			User user = userService.getUserById(conn, j.getLong("upUserId"));
+			json.getJSONObject(i).put("user", user);
+		}
+		return json;
 	}
 
 	public JSONObject getContentByType(SyncClient client, Byte type, Integer count, Integer offset) throws Exception {

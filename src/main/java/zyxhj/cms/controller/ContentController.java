@@ -101,7 +101,6 @@ public class ContentController extends Controller {
 			@P(t = "内容类型Content.TYPE") Byte type, //
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题") String title, //
-			@P(t = "标签") String tags, //
 			@P(t = "数据（JSON）") String data //
 	) throws Exception {
 		Long upUserId = userId;
@@ -109,7 +108,7 @@ public class ContentController extends Controller {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			return APIResponse.getNewSuccessResp(
-					contentService.createContentDraft(client, module, type, upUserId, upChannelId, title, tags, data));
+					contentService.createContentDraft(client, module, type, upUserId, upChannelId, title, data));
 		}
 	}
 
@@ -126,15 +125,14 @@ public class ContentController extends Controller {
 			@P(t = "内容类型Content.TYPE") Byte type, //
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题") String title, //
-			@P(t = "标签") String tags, //
 			@P(t = "数据（JSON）") String data//
 	) throws Exception {
 		Long upUserId = userId;
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			return APIResponse.getNewSuccessResp(contentService.createContentPublished(client, module, type, upUserId,
-					upChannelId, title, tags, data));
+			return APIResponse.getNewSuccessResp(
+					contentService.createContentPublished(client, module, type, upUserId, upChannelId, title, data));
 		}
 	}
 
@@ -269,14 +267,15 @@ public class ContentController extends Controller {
 	)
 	public APIResponse getContents(//
 			@P(t = "用户编号") Long userId, //
+			@P(t = "所属模块") String module, //
 			Integer count, //
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			return APIResponse
-					.getNewSuccessResp(ServiceUtils.checkNull(contentService.getContents(client, count, offset)));
+			return APIResponse.getNewSuccessResp(
+					ServiceUtils.checkNull(contentService.getContents(conn, client, module, count, offset)));
 		}
 	}
 
@@ -827,11 +826,14 @@ public class ContentController extends Controller {
 			ret = "用户信息"//
 	)
 	public APIResponse loginByWxOpenId(//
-			@P(t = "微信openId") String wxOpenId //
+			@P(t = "微信openId") String wxOpenId, //
+			@P(t = "用户名") String name, //
+			@P(t = "扩展信息") String ext //
+
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			return APIResponse.getNewSuccessResp(userService.loginByWxOpenId(conn, wxOpenId));
+			return APIResponse.getNewSuccessResp(userService.loginByWxOpenId(conn, wxOpenId, name, ext));
 		}
 	}
 
@@ -867,6 +869,21 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			return APIResponse.getNewSuccessResp(userService.editUserInfo(conn, userId, name, mobile, email));
+		}
+	}
+
+	/**
+	 * 获取用户
+	 */
+	@POSTAPI(//
+			path = "getUserById", //
+			des = "根据id用户的信息", //
+			ret = "返回用户信息")
+	public APIResponse getUserById(//
+			@P(t = "用户编号") Long userId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(userService.getUserById(conn, userId));
 		}
 	}
 
