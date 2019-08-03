@@ -109,9 +109,11 @@ public class ContentTagService {
 	/**
 	 * 获取标签分组类型列表
 	 */
-	public List<ContentTagGroup> getTagGroupTypes(DruidPooledConnection conn, String module, Byte type) throws Exception {
+	public List<ContentTagGroup> getTagGroupTypes(DruidPooledConnection conn, String module, Byte type)
+			throws Exception {
 
-		return groupRepository.getListByANDKeys(conn, new String[] {"module","tag_group_type"}, new Object[] {module,type}, 512, 0);
+		return groupRepository.getListByANDKeys(conn, new String[] { "module", "tag_group_type" },
+				new Object[] { module, type }, 512, 0);
 	}
 
 	/**

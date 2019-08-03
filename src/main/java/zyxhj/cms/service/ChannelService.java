@@ -112,16 +112,14 @@ public class ChannelService {
 	/**
 	 * 获取专栏列表
 	 */
-	public JSONArray getChannel(SyncClient client, String module, Integer count, Integer offset) throws Exception {
+	public JSONObject getChannel(SyncClient client, String module, Integer count, Integer offset) throws Exception {
 
-		PrimaryKey pkStart = new PrimaryKeyBuilder().add("_id", PrimaryKeyValue.INF_MIN)
-				.add("id", PrimaryKeyValue.INF_MIN).build();
-
-		PrimaryKey pkEnd = new PrimaryKeyBuilder().add("_id", PrimaryKeyValue.INF_MAX)
-				.add("id", PrimaryKeyValue.INF_MAX).build();
-
-		return TSRepository.nativeGetRange(client, channelRepository.getTableName(), pkStart, pkEnd, count, offset);
-
+		TSQL ts = new TSQL();
+		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) Channel.STATUS.NORMAL.v()).build();
+		ts.setLimit(count);
+		ts.setOffset(offset);
+		SearchQuery query = ts.build();
+		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
 	}
 
 	// 获取专栏列表
@@ -136,7 +134,7 @@ public class ChannelService {
 		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
 	}
 
-	//根据标签获取专栏
+	// 根据标签获取专栏
 	public JSONObject getChannelByTags(SyncClient client, String module, Byte status, String tags, Integer count,
 			Integer offset) throws Exception {
 		TSQL ts = new TSQL();
@@ -149,5 +147,4 @@ public class ChannelService {
 
 	}
 
-	
 }

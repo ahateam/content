@@ -11,6 +11,7 @@ import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 
+import zyxhj.cms.domian.Template;
 import zyxhj.cms.service.ContentService;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.data.DataSource;
@@ -153,6 +154,7 @@ public class ContentTest {
 			e.printStackTrace();
 		}
 	}
+
 //
 //	@Test
 	public void getContentById() {
@@ -171,7 +173,7 @@ public class ContentTest {
 		Integer count = 10;
 		Integer offset = 0;
 		try {
-			System.out.println(contentService.getContents(conn,client,module, count, offset));
+			System.out.println(contentService.getContents(conn, client, module, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -188,7 +190,7 @@ public class ContentTest {
 		Integer offset = 0;
 
 		try {
-			System.out.println(contentService.queryContentsByTags(client,module, type, status,groupKeyword, count, offset));
+//			System.out.println(contentService.queryContentsByTags(client,module, type, status,groupKeyword, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -220,6 +222,14 @@ public class ContentTest {
 			contentService.setContentTags(client, id, contentId, groupKeyword);
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	@Test
+	public void getTemplate() throws Exception {
+		List<Template> template = contentService.getTemplate(conn);
+		for (Template template2 : template) {
+			System.out.println(template2.name);
 		}
 	}
 

@@ -6,12 +6,18 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.Column;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
 import com.alicloud.openservices.tablestore.model.search.SearchQuery;
+import com.alicloud.openservices.tablestore.model.search.sort.FieldSort;
+import com.alicloud.openservices.tablestore.model.search.sort.SortOrder;
 
+import zyxhj.core.domain.User;
+import zyxhj.core.service.UserService;
 import zyxhj.kkqt.domain.TaskList;
 import zyxhj.kkqt.domain.TaskWall;
 import zyxhj.kkqt.repository.TaskListRepository;
@@ -31,11 +37,13 @@ public class TaskWallService {
 
 	private TaskWallRepository taskWallRepository;
 	private TaskListRepository taskListRepository;
+	private UserService userService;
 
 	public TaskWallService() {
 		try {
 			taskWallRepository = Singleton.ins(TaskWallRepository.class);
 			taskListRepository = Singleton.ins(TaskListRepository.class);
+			userService = Singleton.ins(UserService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -60,9 +68,10 @@ public class TaskWallService {
 		tw.status = status;
 		tw.upUserId = upUserId;
 		tw.time = time;
-		if(pos == null) {
+		if (pos == null) {
 			tw.pos = "";
 		}
+		tw.createTime = new Date();
 		tw.title = title;
 		tw.tags = tags;
 		tw.money = money;
@@ -120,9 +129,8 @@ public class TaskWallService {
 	 * 
 	 * @throws Exception
 	 */
-	// TODO 时间倒序，如果不填tags，则全查
-	public JSONObject getTaskByTag(SyncClient client, String module, Byte type, Byte status, String tags, Integer count,
-			Integer offset) throws Exception {
+	public JSONArray getTask(DruidPooledConnection conn, SyncClient client, String module, Byte type, Byte status,
+			String tags, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
 		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status);
 		if (type != null) {
@@ -132,9 +140,18 @@ public class TaskWallService {
 		if (tags != null) {
 			ts.Terms(OP.AND, "tags", tags);
 		}
+		ts.addSort(new FieldSort("createTime", SortOrder.DESC));
+		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
-		return TSRepository.nativeSearch(client, taskWallRepository.getTableName(), "TaskWallIndex", query);
+		JSONObject task = TSRepository.nativeSearch(client, taskWallRepository.getTableName(), "TaskWallIndex", query);
+		JSONArray json = task.getJSONArray("list");
+		for (int i = 0; i < json.size(); i++) {
+			JSONObject j = json.getJSONObject(i);
+			User user = userService.getUserById(conn, j.getLong("upUserId"));
+			json.getJSONObject(i).put("user", user);
+		}
+		return json;
 	}
 
 //	/**
@@ -291,8 +308,8 @@ public class TaskWallService {
 //	}
 
 	// 根据任务类型或状态查询任务
-	public JSONObject getTaskListByTypeORStatus(SyncClient client, String module, Long upUserId, Byte type, Byte status,
-			Integer count, Integer offset) throws Exception {
+	public JSONArray getTaskListByTypeORStatus(DruidPooledConnection conn, SyncClient client, String module,
+			Long upUserId, Byte type, Byte status, Integer count, Integer offset) throws Exception {
 
 		TSQL ts = new TSQL();
 		ts.Term(OP.AND, "module", module).Term(OP.AND, "accUserId", upUserId);
@@ -306,7 +323,14 @@ public class TaskWallService {
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
 
-		return TSRepository.nativeSearch(client, taskListRepository.getTableName(), "TaskListIndex", query);
+		JSONObject con = TSRepository.nativeSearch(client, taskListRepository.getTableName(), "TaskListIndex", query);
+		JSONArray json = con.getJSONArray("list");
+		for (int i = 0; i < json.size(); i++) {
+			JSONObject j = json.getJSONObject(i);
+			User user = userService.getUserById(conn, j.getLong("upUserId"));
+			json.getJSONObject(i).put("user", user);
+		}
+		return json;
 	}
 
 }

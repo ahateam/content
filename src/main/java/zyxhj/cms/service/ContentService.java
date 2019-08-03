@@ -13,11 +13,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.Column;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
-import com.alicloud.openservices.tablestore.model.PrimaryKeyValue;
 import com.alicloud.openservices.tablestore.model.search.SearchQuery;
+import com.alicloud.openservices.tablestore.model.search.sort.FieldSort;
+import com.alicloud.openservices.tablestore.model.search.sort.SortOrder;
 
 import zyxhj.cms.domian.Content;
+import zyxhj.cms.domian.Template;
 import zyxhj.cms.repository.ContentRepository;
+import zyxhj.cms.repository.TemplateRepository;
 import zyxhj.core.domain.User;
 import zyxhj.core.service.UserService;
 import zyxhj.utils.IDUtils;
@@ -37,11 +40,14 @@ public class ContentService {
 
 	private ContentRepository contentRepository;
 	private UserService userService;
+	private TemplateRepository templateRepository;
 
 	public ContentService() {
 		try {
 			contentRepository = Singleton.ins(ContentRepository.class);
 			userService = Singleton.ins(UserService.class);
+			templateRepository = Singleton.ins(TemplateRepository.class);
+
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -108,7 +114,7 @@ public class ContentService {
 	 * 创建内容（默认为草稿）
 	 */
 	public Content createContentDraft(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title,  String data) throws Exception {
+			String title, String data) throws Exception {
 		return addContent(client, module, type, Content.STATUS.DRAFT.v(), upUserId, upChannelId, title, data);
 	}
 
@@ -141,16 +147,19 @@ public class ContentService {
 	/**
 	 * 类容列表
 	 */
-	public JSONArray getContents(DruidPooledConnection conn,SyncClient client,String module, Integer count, Integer offset) throws Exception {
-		
+	public JSONArray getContents(DruidPooledConnection conn, SyncClient client, String module, Integer count,
+			Integer offset) throws Exception {
+
 		TSQL ts = new TSQL();
-		ts.Terms(OP.AND, "module", module).Term(OP.AND, "status",(long) Content.STATUS.NORMAL.v());
+		ts.Terms(OP.AND, "module", module).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v()).Term(OP.AND, "paid",
+				(long) 0);
+		ts.addSort(new FieldSort("createTime", SortOrder.DESC));
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
-		JSONObject con = TSRepository.nativeSearch(client,  contentRepository.getTableName(), "ContentIndex", query);
+		JSONObject con = TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
 		JSONArray json = con.getJSONArray("list");
-		for(int i = 0 ; i < json.size() ; i++) {
+		for (int i = 0; i < json.size(); i++) {
 			JSONObject j = json.getJSONObject(i);
 			User user = userService.getUserById(conn, j.getLong("upUserId"));
 			json.getJSONObject(i).put("user", user);
@@ -160,7 +169,8 @@ public class ContentService {
 
 	public JSONObject getContentByType(SyncClient client, Byte type, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v());
+		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v()).Term(OP.AND,
+				"paid", (long) 0);
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
@@ -174,7 +184,8 @@ public class ContentService {
 			Long upChannelId, String keywords, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
 		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) status).Term(OP.AND, "upUserId", upUserId)
-				.Term(OP.AND, "upChannelId", upChannelId).Match(OP.AND, "title", keywords);
+				.Term(OP.AND, "upChannelId", upChannelId).Match(OP.AND, "title", keywords)
+				.Term(OP.AND, "paid", (long) 0);
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
@@ -184,16 +195,22 @@ public class ContentService {
 	/**
 	 * 根据标签查询内容
 	 */
-	public JSONObject queryContentsByTags(SyncClient client, String module, Byte type, Byte status, String groupKeyword,
-			Integer count, Integer offset) throws Exception {
+	public JSONArray queryContentsByTags(DruidPooledConnection conn, SyncClient client, String module, Byte status,
+			String groupKeyword, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Terms(OP.AND, "module", module).Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) status)
-				.Terms(OP.AND, "tags", groupKeyword);
+		ts.Terms(OP.AND, "module", module).Term(OP.AND, "status", (long) status).Terms(OP.AND, "tags", groupKeyword)
+				.Term(OP.AND, "paid", (long) 0);
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
-//		return contentRepository.search(client, "ContentIndex", query);
-		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
+		JSONObject con = TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
+		JSONArray json = con.getJSONArray("list");
+		for (int i = 0; i < json.size(); i++) {
+			JSONObject j = json.getJSONObject(i);
+			User user = userService.getUserById(conn, j.getLong("upUserId"));
+			json.getJSONObject(i).put("user", user);
+		}
+		return json;
 	}
 
 	/**
@@ -242,7 +259,38 @@ public class ContentService {
 	}
 
 	/**
-	 * 
+	 * 获取用户发布内容
 	 */
+	public JSONObject getContentByUpUserId(SyncClient client, String module, Long upUserId, Integer count,
+			Integer offset) throws Exception {
+		TSQL ts = new TSQL();
+		ts.Terms(OP.AND, "module", module).Term(OP.AND, "upUserId", upUserId);
+		ts.addSort(new FieldSort("createTime", SortOrder.DESC));
+		ts.setLimit(count);
+		ts.setOffset(offset);
+		SearchQuery query = ts.build();
+		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
+	}
+
+	public JSONArray returnTabBar() {
+		JSONArray json = new JSONArray();
+		JSONObject jo1 = new JSONObject();
+		jo1.put("name", "发图文");
+		jo1.put("type", 1);
+		jo1.put("url", "/static/image/release.png");
+		json.add(jo1);
+		JSONObject jo2 = new JSONObject();
+		jo2.put("name", "发视频");
+		jo2.put("type", 0);
+		jo2.put("url", "/static/image/video.png");
+		json.add(jo2);
+		return json;
+	}
+
+	public List<Template> getTemplate(DruidPooledConnection conn) throws Exception {
+
+		return templateRepository.getList(conn, 512, 0);
+
+	}
 
 }

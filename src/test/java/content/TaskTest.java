@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 
@@ -89,9 +90,9 @@ public class TaskTest {
 		String tags = "走心";
 		Byte status = 0;
 
-		JSONObject taskByTag = taskWallService.getTaskByTag(client, module, type, status, tags, 10, 0);
-		System.out.println("ByTag");
-		System.out.println(taskByTag);
+//		JSONObject taskByTag = taskWallService.getTaskByTag(client, module, type, status, tags, 10, 0);
+//		System.out.println("ByTag");
+//		System.out.println(taskByTag);
 	}
 
 	// 接取任务
@@ -154,20 +155,20 @@ public class TaskTest {
 		String module = "kkqt";
 		Byte type = 2;
 		Byte status = null;
-		JSONObject taskListByWxOpenId = taskWallService.getTaskListByTypeORStatus(client, module, upUserId, type,
+		JSONArray taskListByWxOpenId = taskWallService.getTaskListByTypeORStatus(conn, client, module, upUserId, type,
 				status, 10, 0);
 		System.out.println("根据类型+状态查询已接任务（所有任务  包括已完成任务）");
 		System.out.println(taskListByWxOpenId);
 	}
-	
+
 	@Test
 	public void testGetTask() throws Exception {
 		String module = "kkqt";
 		Byte type = 0;
 		Byte status = 1;
 		String tags = null;
-		JSONObject taskByTag = taskWallService.getTaskByTag(client, module, type, status, tags, 10, 0);
-		System.out.println(taskByTag);
+//		JSONObject taskByTag = taskWallService.getTaskByTag(client, module, type, status, tags, 10, 0);
+//		System.out.println(taskByTag);
 	}
 
 }

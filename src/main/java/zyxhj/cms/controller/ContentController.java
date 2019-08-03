@@ -209,12 +209,11 @@ public class ContentController extends Controller {
 	 * 
 	 */
 	@POSTAPI(path = "queryContentsByTags", //
-			des = "查询标签", //
+			des = "查询根据标签查询内容", //
 			ret = "内容对象数组"//
 	)
 	public APIResponse queryContentsByTags(//
 			@P(t = "用户编号") Long userId, //
-			@P(t = "内容类型Content.TYPE", r = false) Byte contentType, //
 			@P(t = "内容状态Content.STATUS", r = false) Byte status, //
 			@P(t = "标签分组关键字", r = false) String groupKeyword, //
 			@P(t = "隶属") String module, //
@@ -224,8 +223,8 @@ public class ContentController extends Controller {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			return APIResponse.getNewSuccessResp(contentService.queryContentsByTags(client, module, contentType, status,
-					groupKeyword, count, offset));
+			return APIResponse.getNewSuccessResp(
+					contentService.queryContentsByTags(conn, client, module, status, groupKeyword, count, offset));
 		}
 	}
 
@@ -339,6 +338,28 @@ public class ContentController extends Controller {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			return APIResponse.getNewSuccessResp(contentService.getContentTagsById(client, contentId, groupKeyword));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getContentByUpUserId", //
+			des = "获取用户发布的内容", //
+			ret = "内容列表"//
+	)
+	public APIResponse getContentByUpUserId(//
+			@P(t = "隶属") String module, //
+			@P(t = "用户编号") Long userId, //
+			Integer count, //
+			Integer offset//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
+
+			return APIResponse
+					.getNewSuccessResp(contentService.getContentByUpUserId(client, module, userId, count, offset));
 		}
 	}
 
@@ -680,7 +701,7 @@ public class ContentController extends Controller {
 			des = "根据标签/类型/状态获取任务", //
 			ret = "任务列表"//
 	)
-	public APIResponse getTaskByTag(//
+	public APIResponse getTask(//
 			@P(t = "隶属") String module, //
 			@P(t = "状态  如无此条件  为null", r = false) Byte status, //
 			@P(t = "类型  如无此条件  为null", r = false) Byte type, //
@@ -690,8 +711,8 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			return APIResponse
-					.getNewSuccessResp(taskWallService.getTaskByTag(client, module, type, status, tags, count, offset));
+			return APIResponse.getNewSuccessResp(
+					taskWallService.getTask(conn, client, module, type, status, tags, count, offset));
 		}
 	}
 
@@ -806,8 +827,8 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			return APIResponse.getNewSuccessResp(
-					taskWallService.getTaskListByTypeORStatus(client, module, accUserId, type, status, count, offset));
+			return APIResponse.getNewSuccessResp(taskWallService.getTaskListByTypeORStatus(conn, client, module,
+					accUserId, type, status, count, offset));
 		}
 	}
 
@@ -884,6 +905,34 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			return APIResponse.getNewSuccessResp(userService.getUserById(conn, userId));
+		}
+	}
+
+	/**
+	 * 获取发布信息
+	 */
+	@POSTAPI(//
+			path = "returnTabBar", //
+			des = "获取发布类型", //
+			ret = "")
+	public APIResponse returnTabBar(//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(contentService.returnTabBar());
+		}
+	}
+
+	/**
+	 * 获取模板
+	 */
+	@POSTAPI(//
+			path = "getTemplate", //
+			des = "获取模板", //
+			ret = "")
+	public APIResponse getTemplate(//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(contentService.getTemplate(conn));
 		}
 	}
 
