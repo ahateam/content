@@ -55,12 +55,12 @@ public class ContentTagTest {
 	private static final Long tagGroupId = IDUtils.getSimpleId();
 //	private static final String keyword = "首个分组";
 
-//	@Test
+	@Test
 	public void CreateContentTag() {
 		String module = "kkqt";
-		Long groupId = 400548867662037L;
-		String groupKeyword = "首页";
-		String name = "真理名言";
+		Long groupId = 400682787413303L;
+		String groupKeyword = "分享模板信息";
+		String name = "推荐";
 
 		try {
 			contentTagService.createTag(conn, module, groupId, groupKeyword, name);
@@ -149,9 +149,9 @@ public class ContentTagTest {
 //	@Test
 	public void testCreateTagGroup() {
 		String module = "kkqt";
-		Byte tagGroupType = 2;
-		String type = "附近";
-		String keyword = "附近";
+		Byte tagGroupType = 3;
+		String type = "模板";
+		String keyword = "模板";
 		String remark = "";
 		try {
 

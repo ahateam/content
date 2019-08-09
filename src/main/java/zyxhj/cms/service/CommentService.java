@@ -5,6 +5,7 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
@@ -27,15 +28,16 @@ public class CommentService {
 	private static Logger log = LoggerFactory.getLogger(CommentService.class);
 
 	private CommentRepository commentRepository;
+	private UpvoteService upvoteService;
 
 	public CommentService() {
 		try {
 			commentRepository = Singleton.ins(CommentRepository.class);
+			upvoteService = Singleton.ins(UpvoteService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
 	}
-
 
 	// 创建评论
 	public Comment createComment(SyncClient client, String module, Long contentId, Long userId, String commentContent,
@@ -57,33 +59,58 @@ public class CommentService {
 	// 删除评论
 	public void delComment(SyncClient client, String _id, Long id) throws Exception {
 		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", id).build();
-
 		commentRepository.delete(client, pk);
 
 	}
 
-	// 获取内容评论或者是夸夸评论
+//	// 获取内容评论或者是夸夸评论
+//	public JSONObject getCommentByContentId(SyncClient client, String module, Long contentId, Integer count,
+//			Integer offset) throws Exception {
+//		TSQL ts = new TSQL();
+//		ts.Term(OP.AND, "contentId", contentId).Term(OP.AND, "module", module);
+//		ts.addSort(new FieldSort("createTime", SortOrder.ASC));
+//		ts.setLimit(count);
+//		ts.setOffset(offset);
+//		SearchQuery query = ts.build();
+//		return TSRepository.nativeSearch(client, commentRepository.getTableName(), "CommentIndex", query);
+//
+//	}
+
+	// 获取总评论数
 	public JSONObject getCommentByContentId(SyncClient client, String module, Long contentId, Integer count,
 			Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "contentId", contentId).Term(OP.AND, "module", module);
-//		ts.addSort(new Sort(Arrays.asList()));
-		ts.addSort(new FieldSort("upvote", SortOrder.ASC));
-		ts.setLimit(count);
-		ts.setLimit(offset);
-		SearchQuery query = ts.build();
-		return TSRepository.nativeSearch(client, commentRepository.getTableName(), "CommentIndex", query);
-
-	}
-
-	// 获取总评论数
-	public JSONObject countCommentByContentId(SyncClient client, Long contentId) throws Exception {
-		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "contentId", contentId).MatchAll(OP.AND);
-		ts.setLimit(0);
+		ts.Match(OP.AND, "contentId", contentId.toString()).Term(OP.AND, "module", module);
+		ts.addSort(new FieldSort("createTime", SortOrder.ASC));
+		ts.setOffset(0);
+		ts.setLimit(10);
 		ts.setGetTotalCount(true);
 		SearchQuery query = ts.build();
-		return TSRepository.nativeSearch(client, commentRepository.getTableName(), "CommentIndex", query);
+		JSONObject comment = TSRepository.nativeSearch(client, commentRepository.getTableName(), "CommentIndex", query);
+		JSONArray json = comment.getJSONArray("list");
+		for (int i = 0; i < json.size(); i++) {
+			JSONObject j = json.getJSONObject(i);
+			Integer c = upvoteService.countUpvote(client, j.getLong("id"));
+//			Integer c = countCommentByContentId(client,);
+			System.out.println(c);
+			json.getJSONObject(i).put("commentTotalCount", c);
+		}
+		Integer contentUpvote = upvoteService.countUpvote(client, contentId);
+		comment.put("contentUpvote", contentUpvote);
+//		return comment.getInteger("totalCount");
+		comment.put("list", json);
+		return comment;
 	}
+
+//	private Integer countCommentByContentId(SyncClient client, Long contentId) throws Exception {
+//		TSQL ts = new TSQL();
+//		ts.Match(OP.AND, "contentId", contentId.toString());
+//		ts.setLimit(10);
+//		ts.setGetTotalCount(true);
+//		SearchQuery query = ts.build();
+//		JSONObject comment = TSRepository.nativeSearch(client, commentRepository.getTableName(), "CommentIndex", query);
+//		Integer count = comment.getInteger("totalCount");
+//		return count;
+//	}
 
 }

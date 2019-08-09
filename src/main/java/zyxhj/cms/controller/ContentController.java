@@ -14,9 +14,11 @@ import zyxhj.cms.domian.Content;
 import zyxhj.cms.domian.ContentTag;
 import zyxhj.cms.domian.ContentTagGroup;
 import zyxhj.cms.service.ChannelService;
+import zyxhj.cms.service.CommentService;
 import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
 import zyxhj.cms.service.TaskWallService;
+import zyxhj.cms.service.UpvoteService;
 import zyxhj.core.domain.User;
 import zyxhj.core.service.UserService;
 import zyxhj.kkqt.domain.TaskList;
@@ -38,6 +40,8 @@ public class ContentController extends Controller {
 	private ChannelService channelService;
 	private TaskWallService taskWallService;
 	private UserService userService;
+	private CommentService commentService;
+	private UpvoteService upvoteService;
 
 	public ContentController(String node) {
 		super(node);
@@ -50,6 +54,8 @@ public class ContentController extends Controller {
 			channelService = Singleton.ins(ChannelService.class);
 			taskWallService = Singleton.ins(TaskWallService.class);
 			userService = Singleton.ins(UserService.class);
+			commentService = Singleton.ins(CommentService.class);
+			upvoteService = Singleton.ins(UpvoteService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -69,9 +75,6 @@ public class ContentController extends Controller {
 
 	@ENUM(des = "任务类型")
 	public TaskWall.TYPE[] taskWallTypes = TaskWall.TYPE.values();
-
-	@ENUM(des = "任务需求")
-	public TaskWall.NEED[] taskWallNeed = TaskWall.NEED.values();
 
 	@ENUM(des = "任务等级")
 	public TaskWall.LEVEL[] taskWallLevel = TaskWall.LEVEL.values();
@@ -657,20 +660,19 @@ public class ContentController extends Controller {
 			@P(t = "隶属") String module, //
 			@P(t = "任务类型") Byte type, //
 			@P(t = "任务等级") Byte level, //
-			@P(t = "需求") String needs, //
 			@P(t = "创建Id") Long upUsreId, //
-			@P(t = "任务时间") Date time, //
 			@P(t = "地区", r = false) String pos, //
 			@P(t = "需求标题") String title, //
 			@P(t = "需求金额") Double money, //
 			@P(t = "需求详细") String detail, //
+			@P(t = "需求详细") Byte status, //
 			@P(t = "任务参与人数") Byte accessStatus, //
 			@P(t = "标签") String tags //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			return APIResponse.getNewSuccessResp(taskWallService.createTaskWallPublished(client, module, type, level,
-					needs, upUsreId, time, pos, title, tags, money, detail, accessStatus));
+			return APIResponse.getNewSuccessResp(taskWallService.createTask(client, module, type, level, status,
+					upUsreId, pos, title, tags, money, detail, accessStatus));
 		}
 	}
 
@@ -678,17 +680,19 @@ public class ContentController extends Controller {
 	 * 
 	 */
 	@POSTAPI(//
-			path = "editTaskWallStatus", //
+			path = "editTaskListStatus", //
 			des = "修改任务状态", //
 			ret = ""//
 	)
-	public APIResponse editTaskWallStatus(//
-			@P(t = "任务分片编号") String _id, //
-			@P(t = "任务id") Long taskWallId, //
+	public APIResponse editTaskListStatus(//
+			@P(t = "接取id") Long taskListId, //
+			@P(t = "用户id") Long userId, //
+			@P(t = "任务分片id") String task_id, //
+			@P(t = "任务id") Long taskId, //
 			@P(t = "状态") Byte status //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			taskWallService.editTaskListStatus(client, _id, taskWallId, status);
+			taskWallService.editTaskListStatus(conn, client, task_id, userId, taskListId, taskId, status);
 			return APIResponse.getNewSuccessResp();
 		}
 	}
@@ -804,7 +808,7 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
-			return APIResponse.getNewSuccessResp(taskWallService.acceptanceTask(client, module, accUserId, type,
+			return APIResponse.getNewSuccessResp(taskWallService.acceptanceTask(conn, client, module, accUserId, type,
 					taskTitle, task_id, taksId, upUserId, accessStatus, proviteData));
 		}
 	}
@@ -829,6 +833,74 @@ public class ContentController extends Controller {
 
 			return APIResponse.getNewSuccessResp(taskWallService.getTaskListByTypeORStatus(conn, client, module,
 					accUserId, type, status, count, offset));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTaskListByTaskId", //
+			des = " 根据任务id查询接取的人", //
+			ret = "接取任务列表"//
+	)
+	public APIResponse getTaskListByTaskId(//
+			@P(t = "任务Id") Long taskId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(taskWallService.getTaskListByTaskId(conn, taskId));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTaskListByAccUserId", //
+			des = " 根据用户id获取该用户已经完成的任务", //
+			ret = "任务列表"//
+	)
+	public APIResponse getTaskListByAccUserId(//
+			@P(t = "用户id") Long accUserId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(taskWallService.getTaskListByTaskId(conn, accUserId));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "setTaskListTime", //
+			des = " 设置该任务完成的时间", //
+			ret = ""//
+	)
+	public APIResponse setTaskListTime(//
+			@P(t = "任务编号") Long taskListId, //
+			@P(t = "完成时间") Date time //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			taskWallService.setTaskListTime(conn, taskListId, time);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "setTaskListData", //
+			des = " 设置任务内容", //
+			ret = ""//
+	)
+	public APIResponse setTaskListData(//
+			@P(t = "任务编号") Long taskListId, //
+			@P(t = "数据") String data //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			taskWallService.setTaskListData(conn, taskListId, data);
+			return APIResponse.getNewSuccessResp();
 		}
 	}
 
@@ -930,9 +1002,167 @@ public class ContentController extends Controller {
 			des = "获取模板", //
 			ret = "")
 	public APIResponse getTemplate(//
+			@P(t = "隶属") String module, //
+			@P(t = "类型") Byte type //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			return APIResponse.getNewSuccessResp(contentService.getTemplate(conn));
+			return APIResponse.getNewSuccessResp(contentService.getTemplate(conn, module, type));
+		}
+	}
+
+	/**
+	 * 获取模板
+	 */
+	@POSTAPI(//
+			path = "getTemplateByTag", //
+			des = "根据标签获取模板", //
+			ret = "")
+	public APIResponse getTemplateByTag(//
+			@P(t = "隶属") String module, //
+			@P(t = "标签") String tags, //
+			@P(t = "类型") Byte type, //
+			Integer count, //
+			Integer offset //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse
+					.getNewSuccessResp(contentService.getTemplateByTag(conn, module, tags, type, count, offset));
+		}
+	}
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//评论
+
+	/**
+	 * 创建评论
+	 */
+	@POSTAPI(//
+			path = "createComment", //
+			des = "创建评论", //
+			ret = "")
+	public APIResponse createComment(//
+			@P(t = "隶属") String module, //
+			@P(t = "内容编号") Long contentId, //
+			@P(t = "用户编号") Long userId, //
+			@P(t = "评论内容") String commentContent, //
+			@P(t = "其他数据") String data //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(
+					commentService.createComment(client, module, contentId, userId, commentContent, data));
+		}
+	}
+
+	/**
+	 * 删除评论
+	 */
+	@POSTAPI(//
+			path = "delComment", //
+			des = "删除评论", //
+			ret = "")
+	public APIResponse delComment(//
+			@P(t = "分片编号") String _id, //
+			@P(t = "评论编号") Long commentId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			commentService.delComment(client, _id, commentId);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+//	/**
+//	 * 获取内容评论或者是夸夸评论
+//	 */
+//	@POSTAPI(//
+//			path = "getCommentByContentId", //
+//			des = "获取评论信息", //
+//			ret = "评论内容信息")
+//	public APIResponse getCommentByContentId(//
+//			@P(t = "隶属") String module, //
+//			@P(t = "内容编号") Long contentId, //
+//			Integer count, //
+//			Integer offset //
+//	) throws Exception {
+//		try (DruidPooledConnection conn = dds.getConnection()) {
+//			return APIResponse
+//					.getNewSuccessResp(commentService.getCommentByContentId(client, module, contentId, count, offset));
+//		}
+//	}
+
+	/**
+	 * 获取内容评论或者是夸夸评论
+	 */
+	@POSTAPI(//
+			path = "getCommentByContentId", //
+			des = "获取总评论数", //
+			ret = "评论内容信息")
+	public APIResponse getCommentByContentId(//
+			@P(t = "隶属") String module, //
+			@P(t = "内容编号") Long contentId, //
+			Integer count, //
+			Integer offset //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse
+					.getNewSuccessResp(commentService.getCommentByContentId(client, module, contentId, count, offset));
+		}
+	}
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//点赞
+
+	/**
+	 * 点赞
+	 */
+	@POSTAPI(//
+			path = "createUpvote", //
+			des = "点赞", //
+			ret = "")
+	public APIResponse createUpvote(//
+			@P(t = "内容编号/评论编号") Long contentId, //
+			@P(t = "用户编号") Long userId, //
+			@P(t = "评论类型") Byte type //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			upvoteService.createUpvote(client, contentId, userId, type);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 获取点赞总数
+	 */
+	@POSTAPI(//
+			path = "countUpvote", //
+			des = "获取点赞总数", //
+			ret = "点赞数")
+	public APIResponse countUpvote(//
+			@P(t = "内容编号") Long contentId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(upvoteService.countUpvote(client, contentId));
+		}
+	}
+
+	/**
+	 * 查看用户是否投票
+	 */
+	@POSTAPI(//
+			path = "checkUpvote", //
+			des = "查看用户是否投票", //
+			ret = "boolean类型值 ")
+	public APIResponse checkUpvote(//
+			@P(t = "内容编号") Long contentId, //
+			@P(t = "用户编号") Long userId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			return APIResponse.getNewSuccessResp(upvoteService.checkUpvote(client, contentId, userId));
 		}
 	}
 

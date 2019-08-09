@@ -9,6 +9,7 @@ public class ChannelUserRepository extends RDSRepository<ChannelUser> {
 		super(ChannelUser.class);
 	}
 
-	
-
+	public void get() {
+//		this.sql
+	}
 }
