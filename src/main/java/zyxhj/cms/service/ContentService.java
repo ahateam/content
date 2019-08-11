@@ -27,6 +27,7 @@ import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.BaseRC;
 import zyxhj.utils.api.ServerException;
+import zyxhj.utils.data.EXP;
 import zyxhj.utils.data.ts.ColumnBuilder;
 import zyxhj.utils.data.ts.PrimaryKeyBuilder;
 import zyxhj.utils.data.ts.TSQL;
@@ -275,22 +276,37 @@ public class ContentService {
 	public JSONArray returnTabBar() {
 		JSONArray json = new JSONArray();
 		JSONObject jo1 = new JSONObject();
-		jo1.put("name", "发图文");
-		jo1.put("type", 1);
-		jo1.put("url", "/static/image/release.png");
+		jo1.put("iconPath", "/static/image/release.png");
+		jo1.put("selectedIconPath", "/static/image/release.png");
+		jo1.put("text", "发图文");
+		jo1.put("active", true);
+		jo1.put("url", "/pages/index/addContent/addContent?type=1");
 		json.add(jo1);
 		JSONObject jo2 = new JSONObject();
-		jo2.put("name", "发视频");
-		jo2.put("type", 0);
-		jo2.put("url", "/static/image/video.png");
+		jo1.put("iconPath", "/static/image/video.png");
+		jo1.put("selectedIconPath", "/static/image/video.png");
+		jo2.put("text", "发视频");
+		jo2.put("active", false);
+		jo2.put("url", "/pages/index/addContent/addContent?type=0");
 		json.add(jo2);
 		return json;
 	}
 
-	public List<Template> getTemplate(DruidPooledConnection conn) throws Exception {
+	public List<Template> getTemplate(DruidPooledConnection conn, String module, Byte type) throws Exception {
+//		return templateRepository.getList(conn, EXP.ins().and("module", "=", module).and("type", "=", type)
+//				.and("status", "=", Template.STATUS.OPEN.v()), 512, 0);
 
-		return templateRepository.getList(conn, 512, 0);
+		return templateRepository.getList(conn,
+				EXP.ins().key("module", module).andKey("type", type).andKey("status", Template.STATUS.OPEN.v()), 512,
+				0);
 
+	}
+
+	public List<Template> getTemplateByTag(DruidPooledConnection conn, String module, String tags, Byte type,
+			Integer count, Integer offset) throws Exception {
+		return templateRepository.getList(conn,
+				EXP.ins().key("module", module).andKey("type", type).and(EXP.jsonContains("tags", "$", tags)), count,
+				offset);
 	}
 
 }

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
@@ -24,6 +25,9 @@ import zyxhj.kkqt.repository.TaskListRepository;
 import zyxhj.kkqt.repository.TaskWallRepository;
 import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
+import zyxhj.utils.api.BaseRC;
+import zyxhj.utils.api.ServerException;
+import zyxhj.utils.data.EXP;
 import zyxhj.utils.data.ts.ColumnBuilder;
 import zyxhj.utils.data.ts.PrimaryKeyBuilder;
 import zyxhj.utils.data.ts.TSQL;
@@ -54,9 +58,8 @@ public class TaskWallService {
 	 * 
 	 * @throws Exception
 	 */
-	public TaskWall createTask(SyncClient client, String module, Byte type, Byte level, String needs, Long status,
-			Long upUserId, Date time, String pos, String title, String tags, Double money, String detail,
-			Byte accessStatus) throws Exception {
+	public TaskWall createTask(SyncClient client, String module, Byte type, Byte level, Byte status, Long upUserId,
+			String pos, String title, String tags, Double money, String detail, Byte accessStatus) throws Exception {
 		TaskWall tw = new TaskWall();
 		Long id = IDUtils.getSimpleId();
 		tw._id = TSUtils.get_id(id);
@@ -64,10 +67,12 @@ public class TaskWallService {
 		tw.module = module;
 		tw.type = (long) type;
 		tw.level = (long) level;
-		tw.needs = needs;
-		tw.status = status;
+		if (status == TaskWall.STATUS.CREATED.v()) {
+			tw.status = (long) TaskWall.STATUS.CREATED.v();
+		} else if (status == TaskWall.STATUS.PUBLISHED.v()) {
+			tw.status = (long) TaskWall.STATUS.PUBLISHED.v();
+		}
 		tw.upUserId = upUserId;
-		tw.time = time;
 		if (pos == null) {
 			tw.pos = "";
 		}
@@ -75,28 +80,11 @@ public class TaskWallService {
 		tw.title = title;
 		tw.tags = tags;
 		tw.money = money;
+		tw.taskStatus = (long) TaskWall.TASKSTATUS.PUBLISHED.v();
 		tw.detail = detail;
 		tw.accessStatus = (long) accessStatus; // 默认任务未被接取
 		taskWallRepository.insert(client, tw, false);
 		return tw;
-	}
-
-	// 创建任务 默认状态为已创建
-	public TaskWall createTaskWallCreated(SyncClient client, String module, Byte type, Byte level, String needs,
-			Long upUserId, Date time, String pos, String title, String tags, Double money, String detail,
-			Byte accessStatus) throws Exception {
-
-		return this.createTask(client, module, type, level, needs, (long) TaskWall.STATUS.CREATED.v(), upUserId, time,
-				pos, title, tags, money, detail, accessStatus);
-	}
-
-	// 创建任务 默认状态为已发布
-	public TaskWall createTaskWallPublished(SyncClient client, String module, Byte type, Byte level, String needs,
-			Long upUserId, Date time, String pos, String title, String tags, Double money, String detail,
-			Byte accessStatus) throws Exception {
-
-		return this.createTask(client, module, type, level, needs, (long) TaskWall.STATUS.PUBLISHED.v(), upUserId, time,
-				pos, title, tags, money, detail, accessStatus);
 	}
 
 	// 修改任务状态
@@ -107,22 +95,6 @@ public class TaskWallService {
 		List<Column> columns = cb.build();
 		TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, false, columns);
 	}
-
-//	/**
-//	 * 获取任务列表
-//	 */
-//	// TODO 删除
-//	public JSONObject getTask(SyncClient client, String module, Byte status, Integer count, Integer offset)
-//			throws Exception {
-//
-//		TSQL ts = new TSQL();
-//		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status).build();
-//		ts.setLimit(count);
-//		ts.setOffset(offset);
-//		SearchQuery query = ts.build();
-//
-//		return TSRepository.nativeSearch(client, taskWallRepository.getTableName(), "TaskWallIndex", query);
-//	}
 
 	/**
 	 * 根据标签获取任务列表
@@ -154,22 +126,6 @@ public class TaskWallService {
 		return json;
 	}
 
-//	/**
-//	 * 根据类型获取任务列表
-//	 * 
-//	 * @throws Exception
-//	 */
-//	// TODO 合并接口
-//	public JSONObject getTaskByType(SyncClient client, String module, Byte type, Integer count, Integer offset)
-//			throws Exception {
-//		TSQL ts = new TSQL();
-//		ts.Term(OP.AND, "module", module);
-//		ts.setLimit(count);
-//		ts.setOffset(offset);
-//		SearchQuery query = ts.build();
-//		return TSRepository.nativeSearch(client, taskWallRepository.getTableName(), "TaskWallIndex", query);
-//	}
-
 	/**
 	 * 根据id任务
 	 * 
@@ -181,17 +137,6 @@ public class TaskWallService {
 		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskWallId).build();
 		return TSRepository.nativeGet(client, taskWallRepository.getTableName(), pk);
 	}
-
-//	// 用户获取自己的发布列表
-//	public JSONObject getTaskById(SyncClient client, String module, Long upUserId, Integer count, Integer offset)
-//			throws Exception {
-//		TSQL ts = new TSQL();
-//		ts.Term(OP.AND, "module", module).Term(OP.AND, "upUserId", upUserId);
-//		ts.setLimit(count);
-//		ts.setOffset(offset);
-//		SearchQuery query = ts.build();
-//		return TSRepository.nativeSearch(client, taskWallRepository.getTableName(), "TaskWallIndex", query);
-//	}
 
 	// 用户根据状态获取自己的发布列表
 	public JSONObject getTaskByUpUserId(SyncClient client, String module, Long upUserId, Byte type, Byte status,
@@ -224,113 +169,127 @@ public class TaskWallService {
 	/**
 	 * 接取任务
 	 */
-	// TODO 用userId
-	public TaskList acceptanceTask(SyncClient client, String module, Long accUserId, Byte type, String taskTitle,
-			String task_id, Long taksId, Long upUserId, Byte accessStatus, String proviteData) throws Exception {
-		TaskList tl = new TaskList();
-		Long id = IDUtils.getSimpleId();
-		tl._id = TSUtils.get_id(id);
-		tl.id = id;
-		tl.module = module;
-		tl.type = (long) type;
-		tl.accUserId = accUserId;
-		tl.task_id = task_id;
-		tl.taskId = taksId;
-		tl.upUserId = upUserId;
-		tl.status = (long) TaskList.STATUS.NOTCOMPLETED.v();
-		tl.createTime = new Date();
-		tl.updateTime = new Date();
-		tl.taskTitle = taskTitle;
-		tl.proviteData = proviteData;
-		taskListRepository.insert(client, tl, false);
+	public TaskList acceptanceTask(DruidPooledConnection conn, SyncClient client, String module, Long accUserId,
+			Byte type, String taskTitle, String task_id, Long taskId, Long upUserId, Byte accessStatus,
+			String proviteData) throws Exception {
+		TaskList taskList = taskListRepository.get(conn,
+				EXP.ins().key("task_id", taskId).andKey("acc_user_id", accUserId));
 
-		if (accessStatus == TaskWall.ACCESSSTATUS.ONE.v()) {
-			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", task_id).add("id", taksId).build();
+		if (taskList == null) {
+			TaskList tl = new TaskList();
+			tl.id = IDUtils.getSimpleId();
+			tl.module = module;
+			tl.type = type;
+			tl.accUserId = accUserId;
+			tl.task_id = task_id;
+			tl.taskId = taskId;
+			tl.upUserId = upUserId;
+			tl.status = TaskList.STATUS.EXAMINE.v();
+			tl.createTime = new Date();
+			tl.time = new Date();
+			tl.updateTime = new Date();
+			tl.taskTitle = taskTitle;
+			tl.proviteData = proviteData;
+			taskListRepository.insert(conn, tl);
+			return tl;
+		} else {
+			throw new ServerException(BaseRC.ACC_TASK_LIST);
+		}
+	}
+
+	// 修改任务状态
+	public void editTaskListStatus(DruidPooledConnection conn, SyncClient client, String _id, Long userId,
+			Long taskListId, Long taskId, Byte status) throws Exception {
+		System.out.println("status="+status);
+		TaskList ta = new TaskList();
+		ta.status = status;
+		taskListRepository.update(conn, EXP.ins().key("id", taskListId).andKey("acc_user_id", userId), ta, true);
+		if (status == TaskList.STATUS.EXAMINESUCCESS.v()) {
+			ta.status = TaskList.STATUS.FAIL.v();
+			ta.updateTime = new Date();
+			taskListRepository.update(conn,
+					EXP.ins().key("task_id", taskId).andKey("status", TaskList.STATUS.EXAMINE.v()), ta, true);
+
+			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
 			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("status", (long) TaskWall.STATUS.RECEIVE.v());
+			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINEUSERSUCCESS.v());
+			List<Column> columns = cb.build();
+			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
+		} else if (status == TaskList.STATUS.SUCCESSEXAMINE.v()) {
+			System.out.println("status="+status);
+			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
+			ColumnBuilder cb = new ColumnBuilder();
+			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINETASK.v());
+			List<Column> columns = cb.build();
+			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
+		} else if (status == TaskList.STATUS.REDO.v()) {
+			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
+			ColumnBuilder cb = new ColumnBuilder();
+			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINEUSERSUCCESS.v());
+			List<Column> columns = cb.build();
+			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
+		} else if (status == TaskList.STATUS.SUCCESS.v()) {
+			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
+			ColumnBuilder cb = new ColumnBuilder();
+			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.SUCCESS.v());
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		}
 
-		return tl;
 	}
-
-	// 修改任务状态
-	public void editTaskListStatus(SyncClient client, String _id, Long taskWallId, Byte status) throws Exception {
-		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskWallId).build();
-
-		ColumnBuilder cb = new ColumnBuilder();
-		cb.add("status", status);
-
-		List<Column> columns = cb.build();
-
-		TSRepository.nativeUpdate(client, taskListRepository.getTableName(), pk, true, columns);
-
-	}
-
-//	// 查询已接任务
-//	public JSONObject getTaskListByWxOpenId(SyncClient client, String module, String wxOpenId, Integer count,
-//			Integer offset) throws Exception {
-//		TSQL ts = new TSQL();
-//		ts.Term(OP.AND, "module", module).Term(OP.AND, "wxOpenId", wxOpenId).build();
-//		ts.setLimit(count);
-//		ts.setOffset(offset);
-//		SearchQuery query = ts.build();
-//
-//		return TSRepository.nativeSearch(client, taskListRepository.getTableName(), "TaskListIndex", query);
-//	}
-
-//	// 根据类型查询已接任务
-//	public JSONObject getTaskListByType(SyncClient client, String module, Long upUserId, Byte type, Integer count,
-//			Integer offset) throws Exception {
-//
-//		TSQL ts = new TSQL();
-//		ts.Term(OP.AND, "module", module).Term(OP.AND, "upUserId", upUserId).Term(OP.AND, "type", (long) type).build();
-//		ts.setLimit(count);
-//		ts.setOffset(offset);
-//		SearchQuery query = ts.build();
-//
-//		return TSRepository.nativeSearch(client, taskListRepository.getTableName(), "TaskListIndex", query);
-//	}
-//
-//	// 根据任务状态查询任务
-//	public JSONObject getTaskListByStatus(SyncClient client, String module, Long upUserId, Byte status, Integer count,
-//			Integer offset) throws Exception {
-//
-//		TSQL ts = new TSQL();
-//		ts.Term(OP.AND, "module", module).Term(OP.AND, "upUserId", upUserId).Term(OP.AND, "status", (long) status)
-//				.build();
-//		ts.setLimit(count);
-//		ts.setOffset(offset);
-//		SearchQuery query = ts.build();
-//
-//		return TSRepository.nativeSearch(client, taskListRepository.getTableName(), "TaskListIndex", query);
-//	}
 
 	// 根据任务类型或状态查询任务
 	public JSONArray getTaskListByTypeORStatus(DruidPooledConnection conn, SyncClient client, String module,
 			Long upUserId, Byte type, Byte status, Integer count, Integer offset) throws Exception {
 
-		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "module", module).Term(OP.AND, "accUserId", upUserId);
-		if (type != null) {
-			ts.Term(OP.AND, "type", type);
-		}
-		if (status != null) {
-			ts.Term(OP.AND, "status", status);
-		}
-		ts.setLimit(count);
-		ts.setOffset(offset);
-		SearchQuery query = ts.build();
+		List<TaskList> taskList = taskListRepository.getList(conn, EXP.ins().andKey("module", module)
+				.andKey("acc_user_id", upUserId).andKey("status", status).andKey("type", type), count, offset);
 
-		JSONObject con = TSRepository.nativeSearch(client, taskListRepository.getTableName(), "TaskListIndex", query);
-		JSONArray json = con.getJSONArray("list");
+		String task = JSON.toJSON(taskList).toString();
+		JSONArray json = JSONArray.parseArray(task);
 		for (int i = 0; i < json.size(); i++) {
 			JSONObject j = json.getJSONObject(i);
 			User user = userService.getUserById(conn, j.getLong("upUserId"));
 			json.getJSONObject(i).put("user", user);
 		}
 		return json;
+	}
+
+	// 获取当前任务接取人列表
+	public JSONArray getTaskListByTaskId(DruidPooledConnection conn, Long taskId) throws Exception {
+		List<TaskList> taskList = taskListRepository.getList(conn, EXP.ins().key("task_id", taskId), 512, 0);
+		String task = JSON.toJSON(taskList).toString();
+		JSONArray json = JSONArray.parseArray(task);
+		for (int i = 0; i < json.size(); i++) {
+			JSONObject j = json.getJSONObject(i);
+			User user = userService.getUserById(conn, j.getLong("accUserId"));
+			json.getJSONObject(i).put("user", user);
+			Integer count = taskListRepository.countTaskListByAccUserId(conn, j.getLong("accUserId"));
+			json.getJSONObject(i).put("worksNum", count);
+		}
+		return json;
+	}
+
+	public List<TaskList> getTaskListByAccUserId(DruidPooledConnection conn, String module, Long userId, Integer count,
+			Integer offset) throws Exception {
+		return taskListRepository.getList(conn, EXP.ins().key("module", module).andKey("acc_user_id", userId)
+				.andKey("status", TaskList.STATUS.SUCCESS.v()), count, offset);
+	}
+
+	// 设置完成时间
+	public void setTaskListTime(DruidPooledConnection conn, Long taskListId, Date time) throws Exception {
+		TaskList tl = new TaskList();
+		tl.time = time;
+		tl.updateTime = new Date();
+		taskListRepository.update(conn, EXP.ins().key("id", taskListId), tl, true);
+	}
+	
+	public void setTaskListData(DruidPooledConnection conn, Long taskListId, String data) throws Exception {
+		TaskList tl = new TaskList();
+		tl.taskData = data;
+		tl.updateTime = new Date();
+		taskListRepository.update(conn, EXP.ins().key("id", taskListId), tl, true);
 	}
 
 }

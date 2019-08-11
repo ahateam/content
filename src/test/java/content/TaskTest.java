@@ -68,8 +68,8 @@ public class TaskTest {
 		String detail = "";
 		Byte accessStatus = 0;
 
-		taskWallService.createTaskWallPublished(client, module, type, level, needs, upUserId, time, pos, title, tags,
-				money, detail, accessStatus);
+//		taskWallService.createTaskWallPublished(client, module, type, level, needs, upUserId, time, pos, title, tags,
+//				money, detail, accessStatus);
 
 	}
 
@@ -109,8 +109,8 @@ public class TaskTest {
 		String module = "kkqt";
 		String proviteData = "{}";
 
-		taskWallService.acceptanceTask(client, module, accUserId, type, taskTitle, task_id, taskId, upUserId,
-				accessStatus, proviteData);
+//		taskWallService.acceptanceTask(client, module, accUserId, type, taskTitle, task_id, taskId, upUserId,
+//				accessStatus, proviteData);
 
 	}
 

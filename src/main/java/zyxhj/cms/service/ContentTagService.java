@@ -16,9 +16,10 @@ import zyxhj.cms.repository.ContentTagGroupRepository;
 import zyxhj.cms.repository.ContentTagRepository;
 import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
+import zyxhj.utils.data.EXP;
 
 /**
- * 第三方用户自定义角色service
+ * 内容标签service
  *
  */
 public class ContentTagService {
@@ -67,7 +68,9 @@ public class ContentTagService {
 		ContentTag tag = new ContentTag();
 		tag.status = status;
 
-		tagRepository.updateByKey(conn, "id", tagId, tag, true);
+		tagRepository.update(conn, EXP.ins().and("id", "=", tagId), tag, true);
+
+//		tagRepository.updateByKey(conn, "id", tagId, tag, true);
 
 	}
 
@@ -77,8 +80,9 @@ public class ContentTagService {
 	public List<ContentTag> getTags(DruidPooledConnection conn, String module, Byte status, String keyword,
 			Integer count, Integer offset) throws Exception {
 
-		return tagRepository.getListByANDKeys(conn, new String[] { "module", "group_keyword", "status" },
-				new Object[] { module, keyword, status }, count, offset);
+		return tagRepository.getList(conn,
+				EXP.ins().and("module", "=", module).and("status", "=", status).and("group_keyword", "=", keyword),
+				count, offset);
 	}
 
 	/**
@@ -93,12 +97,15 @@ public class ContentTagService {
 		group.type = type;
 		group.keyword = keyword;
 		group.remark = remark;
+		group.status = ContentTagGroup.STATUS.OPEN.v();
 		if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.HOME.v()) {
 			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.HOME.v();
 		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.VIP.v()) {
 			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.VIP.v();
 		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.TASK.v()) {
 			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.TASK.v();
+		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.TEMPLATE.v()) {
+			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.TEMPLATE.v();
 		}
 
 		groupRepository.insert(conn, group);
@@ -111,9 +118,8 @@ public class ContentTagService {
 	 */
 	public List<ContentTagGroup> getTagGroupTypes(DruidPooledConnection conn, String module, Byte type)
 			throws Exception {
-
-		return groupRepository.getListByANDKeys(conn, new String[] { "module", "tag_group_type" },
-				new Object[] { module, type }, 512, 0);
+		return groupRepository.getList(conn, EXP.ins().and("module", "=", module).and("tag_group_type", "=", type)
+				.and("status", "=", ContentTagGroup.STATUS.OPEN.v()), 512, 0);
 	}
 
 	/**
@@ -124,7 +130,7 @@ public class ContentTagService {
 		ContentTag tag = CONTENT_TAG_CACHE.getIfPresent(tagId);
 		if (tag == null) {
 			// 从数据库中获取
-			tag = tagRepository.getByKey(conn, "id", tagId);
+			tag = tagRepository.get(conn, EXP.ins().and("id", "=", tagId));
 			if (tag != null) {
 				// 放入缓存
 				CONTENT_TAG_CACHE.put(tagId, tag);

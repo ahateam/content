@@ -227,10 +227,10 @@ public class ContentTest {
 
 	@Test
 	public void getTemplate() throws Exception {
-		List<Template> template = contentService.getTemplate(conn);
-		for (Template template2 : template) {
-			System.out.println(template2.name);
-		}
+//		List<Template> template = contentService.getTemplate(conn);
+//		for (Template template2 : template) {
+//			System.out.println(template2.name);
+//		}
 	}
 
 }
