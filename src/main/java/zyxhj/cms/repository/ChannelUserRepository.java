@@ -15,7 +15,7 @@ public class ChannelUserRepository extends RDSRepository<ChannelUser> {
 
 	public ChannelUser getByUserIdAndChannelId(DruidPooledConnection conn, Long userId, Long channelId)
 			throws Exception {
-		return get(conn, "WHERE user_id=? AND channel_id=?", Arrays.asList(userId, channelId));
+		return get(conn, "user_id=? AND channel_id=?", Arrays.asList(userId, channelId));
 	}
 
 	public int deleteByUserIdAndChannelId(DruidPooledConnection conn, Long userId, Long channelId) throws Exception {

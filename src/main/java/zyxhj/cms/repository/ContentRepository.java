@@ -25,7 +25,7 @@ public class ContentRepository extends RDSRepository<Content> {
 	public List<Content> searchContentsByKeyword(DruidPooledConnection conn, Byte type, Byte status, Long upUserId,
 			Long upChannelId, String keywords, Integer count, Integer offset) throws ServerException {
 
-		StringBuffer sb = new StringBuffer("WHERE ");
+		StringBuffer sb = new StringBuffer();
 		SQL sql = new SQL();
 		sql.addExValid("type=?", type);
 		sql.ANDValid("status=?", status);
@@ -42,7 +42,7 @@ public class ContentRepository extends RDSRepository<Content> {
 			Long upChannelId, String groupKeyword, String[] tags, Integer count, Integer offset)
 			throws ServerException {
 
-		StringBuffer sb = new StringBuffer("WHERE ");
+		StringBuffer sb = new StringBuffer();
 		SQL sql = new SQL();
 		sql.addExValid("type=?", type);
 		sql.ANDValid("status=?", status);
@@ -56,22 +56,22 @@ public class ContentRepository extends RDSRepository<Content> {
 
 	public JSONArray getContentTags(DruidPooledConnection conn, Long contentId, String groupKeyword)
 			throws ServerException {
-		return getTags(conn, "tags", groupKeyword, "WHERE id=?", new Object[] { contentId });
+		return getTags(conn, "tags", groupKeyword, "id=?", new Object[] { contentId });
 	}
 
 	public int setContentTags(DruidPooledConnection conn, Long contentId, String groupKeyword, JSONArray tags)
 			throws ServerException {
-		return setTags(conn, "tags", groupKeyword, tags, "WHERE id=?", new Object[] { contentId });
+		return setTags(conn, "tags", groupKeyword, tags, "id=?", new Object[] { contentId });
 	}
 
 	public int addContentTag(DruidPooledConnection conn, Long contentId, String groupKeyword, String tag)
 			throws ServerException {
-		return addTag(conn, "tags", groupKeyword, tag, "WHERE id=?", new Object[] { contentId });
+		return addTag(conn, "tags", groupKeyword, tag, "id=?", new Object[] { contentId });
 	}
 
 	public int delContentTag(DruidPooledConnection conn, Long contentId, String groupKeyword, String tag)
 			throws ServerException {
-		return delTag(conn, "tags", groupKeyword, tag, "WHERE id=?", new Object[] { contentId });
+		return delTag(conn, "tags", groupKeyword, tag, "id=?", new Object[] { contentId });
 	}
 
 }
