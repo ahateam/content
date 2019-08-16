@@ -173,7 +173,7 @@ public class ContentTest {
 		Integer count = 10;
 		Integer offset = 0;
 		try {
-			System.out.println(contentService.getContents(conn, client, module, count, offset));
+//			System.out.println(contentService.getContents(conn, client, module, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
