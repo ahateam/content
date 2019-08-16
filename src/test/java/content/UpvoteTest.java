@@ -127,7 +127,7 @@ public class UpvoteTest {
 		Integer count = 10;
 		Integer offset = 0;
 		try {
-			System.out.println(commentService.getCommentByContentId(client,module,contentId,count,offset));
+//			System.out.println(commentService.getCommentByContentId(client,module,contentId,count,offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

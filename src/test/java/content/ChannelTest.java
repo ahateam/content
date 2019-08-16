@@ -112,8 +112,8 @@ public class ChannelTest {
 		String module = "kkqt";
 		Long channelId = 400350832326030L;
 		Byte status = 1;
-		JSONObject contentByChannelId = channelService.getContentByChannelId(client, module, channelId, status, 10, 0);
-		System.out.println(contentByChannelId);
+//		JSONObject contentByChannelId = channelService.getContentByChannelId(client, module, channelId, status, 10, 0);
+//		System.out.println(contentByChannelId);
 	}
 
 }

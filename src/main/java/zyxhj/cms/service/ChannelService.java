@@ -97,11 +97,14 @@ public class ChannelService {
 	/**
 	 * 根据专栏编号获取内容
 	 */
-	public JSONObject getContentByChannelId(SyncClient client, String module, Long channelId, Byte status,
+	public JSONObject getContentByChannelId(SyncClient client, String module, Long channelId, Byte status, Byte paid,
 			Integer count, Integer offset) throws Exception {
 
 		TSQL ts = new TSQL();
 		ts.Terms(OP.AND, "module", module).Term(OP.AND, "upChannelId", channelId).Term(OP.AND, "status", (long) status);
+		if (paid != null) {
+			ts.Term(OP.AND, "paid", (long) paid);
+		}
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();

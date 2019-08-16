@@ -75,8 +75,8 @@ public class ContentService {
 		}
 	}
 
-	private Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId,
-			Long upChannelId, String title, String data) throws Exception {
+	public Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId, Long upChannelId,
+			String title, String data) throws Exception {
 
 		Long id = IDUtils.getSimpleId();
 		Content c = new Content();
@@ -86,11 +86,7 @@ public class ContentService {
 
 		c.module = module;
 		c.type = (long) type;
-		if (status == Content.STATUS.DRAFT.v() || status == Content.STATUS.NORMAL.v()) {
-			c.status = (long) status;
-		} else {
-			c.status = (long) Content.STATUS.NORMAL.v();// 首次创建时是正常
-		}
+		c.status = (long) status;
 
 		c.createTime = new Date();
 		c.updateTime = c.createTime;
@@ -103,28 +99,12 @@ public class ContentService {
 			c.data = data;
 		}
 		c.proviteData = "{}";
-		c.tags = "[]";// 设置为JSON数组的空格式，否则后续的编辑操作会没效果（可能是MYSQL的bug）
+		c.tags = "[]";// 设置为JSON数组的空格式
 		c.paid = 0L;
 		c.ext = "";
 		contentRepository.insert(client, c, false);
 
 		return c;
-	}
-
-	/**
-	 * 创建内容（默认为草稿）
-	 */
-	public Content createContentDraft(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title, String data) throws Exception {
-		return addContent(client, module, type, Content.STATUS.DRAFT.v(), upUserId, upChannelId, title, data);
-	}
-
-	/**
-	 * 创建内容（默认为正常状态，已发布）
-	 */
-	public Content createContentPublished(SyncClient client, String module, Byte type, Long upUserId, Long upChannelId,
-			String title, String data) throws Exception {
-		return addContent(client, module, type, Content.STATUS.NORMAL.v(), upUserId, upChannelId, title, data);
 	}
 
 	/**
@@ -148,12 +128,17 @@ public class ContentService {
 	/**
 	 * 类容列表
 	 */
-	public JSONArray getContents(DruidPooledConnection conn, SyncClient client, String module, Integer count,
-			Integer offset) throws Exception {
+	public JSONArray getContents(DruidPooledConnection conn, SyncClient client, String module, Byte status, Byte paid,
+			Integer count, Integer offset) throws Exception {
 
 		TSQL ts = new TSQL();
-		ts.Terms(OP.AND, "module", module).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v()).Term(OP.AND, "paid",
-				(long) 0);
+		ts.Terms(OP.AND, "module", module);
+		if (status != null) {
+			ts.Term(OP.AND, "status", (long) status);
+		}
+		if (paid != null) {
+			ts.Term(OP.AND, "paid", (long) paid);
+		}
 		ts.addSort(new FieldSort("createTime", SortOrder.DESC));
 		ts.setLimit(count);
 		ts.setOffset(offset);
@@ -283,8 +268,8 @@ public class ContentService {
 		jo1.put("url", "/pages/index/addContent/addContent?type=1");
 		json.add(jo1);
 		JSONObject jo2 = new JSONObject();
-		jo1.put("iconPath", "/static/image/video.png");
-		jo1.put("selectedIconPath", "/static/image/video.png");
+		jo2.put("iconPath", "/static/image/video.png");
+		jo2.put("selectedIconPath", "/static/image/video.png");
 		jo2.put("text", "发视频");
 		jo2.put("active", false);
 		jo2.put("url", "/pages/index/addContent/addContent?type=0");
@@ -293,19 +278,15 @@ public class ContentService {
 	}
 
 	public List<Template> getTemplate(DruidPooledConnection conn, String module, Byte type) throws Exception {
-//		return templateRepository.getList(conn, EXP.ins().and("module", "=", module).and("type", "=", type)
-//				.and("status", "=", Template.STATUS.OPEN.v()), 512, 0);
-
 		return templateRepository.getList(conn,
-				EXP.ins().key("module", module).andKey("type", type).andKey("status", Template.STATUS.OPEN.v()), 512,
+				EXP.INS().key("module", module).andKey("type", type).andKey("status", Template.STATUS.OPEN.v()), 512,
 				0);
-
 	}
 
 	public List<Template> getTemplateByTag(DruidPooledConnection conn, String module, String tags, Byte type,
 			Integer count, Integer offset) throws Exception {
 		return templateRepository.getList(conn,
-				EXP.ins().key("module", module).andKey("type", type).and(EXP.jsonContains("tags", "$", tags)), count,
+				EXP.INS().key("module", module).andKey("type", type).and(EXP.JSON_CONTAINS("tags", "$", tags)), count,
 				offset);
 	}
 

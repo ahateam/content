@@ -68,7 +68,7 @@ public class ContentTagService {
 		ContentTag tag = new ContentTag();
 		tag.status = status;
 
-		tagRepository.update(conn, EXP.ins().and("id", "=", tagId), tag, true);
+		tagRepository.update(conn, EXP.INS().and("id", "=", tagId), tag, true);
 
 //		tagRepository.updateByKey(conn, "id", tagId, tag, true);
 
@@ -81,7 +81,7 @@ public class ContentTagService {
 			Integer count, Integer offset) throws Exception {
 
 		return tagRepository.getList(conn,
-				EXP.ins().and("module", "=", module).and("status", "=", status).and("group_keyword", "=", keyword),
+				EXP.INS().and("module", "=", module).and("status", "=", status).and("group_keyword", "=", keyword),
 				count, offset);
 	}
 
@@ -118,7 +118,7 @@ public class ContentTagService {
 	 */
 	public List<ContentTagGroup> getTagGroupTypes(DruidPooledConnection conn, String module, Byte type)
 			throws Exception {
-		return groupRepository.getList(conn, EXP.ins().and("module", "=", module).and("tag_group_type", "=", type)
+		return groupRepository.getList(conn, EXP.INS().and("module", "=", module).and("tag_group_type", "=", type)
 				.and("status", "=", ContentTagGroup.STATUS.OPEN.v()), 512, 0);
 	}
 
@@ -130,7 +130,7 @@ public class ContentTagService {
 		ContentTag tag = CONTENT_TAG_CACHE.getIfPresent(tagId);
 		if (tag == null) {
 			// 从数据库中获取
-			tag = tagRepository.get(conn, EXP.ins().and("id", "=", tagId));
+			tag = tagRepository.get(conn, EXP.INS().and("id", "=", tagId));
 			if (tag != null) {
 				// 放入缓存
 				CONTENT_TAG_CACHE.put(tagId, tag);

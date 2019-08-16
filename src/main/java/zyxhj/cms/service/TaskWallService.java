@@ -75,6 +75,8 @@ public class TaskWallService {
 		tw.upUserId = upUserId;
 		if (pos == null) {
 			tw.pos = "";
+		} else {
+			tw.pos = pos;
 		}
 		tw.createTime = new Date();
 		tw.title = title;
@@ -173,7 +175,7 @@ public class TaskWallService {
 			Byte type, String taskTitle, String task_id, Long taskId, Long upUserId, Byte accessStatus,
 			String proviteData) throws Exception {
 		TaskList taskList = taskListRepository.get(conn,
-				EXP.ins().key("task_id", taskId).andKey("acc_user_id", accUserId));
+				EXP.INS().key("task_id", taskId).andKey("acc_user_id", accUserId));
 
 		if (taskList == null) {
 			TaskList tl = new TaskList();
@@ -200,15 +202,15 @@ public class TaskWallService {
 	// 修改任务状态
 	public void editTaskListStatus(DruidPooledConnection conn, SyncClient client, String _id, Long userId,
 			Long taskListId, Long taskId, Byte status) throws Exception {
-		System.out.println("status="+status);
+		System.out.println("status=" + status);
 		TaskList ta = new TaskList();
 		ta.status = status;
-		taskListRepository.update(conn, EXP.ins().key("id", taskListId).andKey("acc_user_id", userId), ta, true);
+		taskListRepository.update(conn, EXP.INS().key("id", taskListId).andKey("acc_user_id", userId), ta, true);
 		if (status == TaskList.STATUS.EXAMINESUCCESS.v()) {
 			ta.status = TaskList.STATUS.FAIL.v();
 			ta.updateTime = new Date();
 			taskListRepository.update(conn,
-					EXP.ins().key("task_id", taskId).andKey("status", TaskList.STATUS.EXAMINE.v()), ta, true);
+					EXP.INS().key("task_id", taskId).andKey("status", TaskList.STATUS.EXAMINE.v()), ta, true);
 
 			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
 			ColumnBuilder cb = new ColumnBuilder();
@@ -217,7 +219,7 @@ public class TaskWallService {
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		} else if (status == TaskList.STATUS.SUCCESSEXAMINE.v()) {
-			System.out.println("status="+status);
+			System.out.println("status=" + status);
 			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
 			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINETASK.v());
@@ -243,7 +245,7 @@ public class TaskWallService {
 	public JSONArray getTaskListByTypeORStatus(DruidPooledConnection conn, SyncClient client, String module,
 			Long upUserId, Byte type, Byte status, Integer count, Integer offset) throws Exception {
 
-		List<TaskList> taskList = taskListRepository.getList(conn, EXP.ins().andKey("module", module)
+		List<TaskList> taskList = taskListRepository.getList(conn, EXP.INS().andKey("module", module)
 				.andKey("acc_user_id", upUserId).andKey("status", status).andKey("type", type), count, offset);
 
 		String task = JSON.toJSON(taskList).toString();
@@ -258,7 +260,7 @@ public class TaskWallService {
 
 	// 获取当前任务接取人列表
 	public JSONArray getTaskListByTaskId(DruidPooledConnection conn, Long taskId) throws Exception {
-		List<TaskList> taskList = taskListRepository.getList(conn, EXP.ins().key("task_id", taskId), 512, 0);
+		List<TaskList> taskList = taskListRepository.getList(conn, EXP.INS().key("task_id", taskId), 512, 0);
 		String task = JSON.toJSON(taskList).toString();
 		JSONArray json = JSONArray.parseArray(task);
 		for (int i = 0; i < json.size(); i++) {
@@ -273,7 +275,7 @@ public class TaskWallService {
 
 	public List<TaskList> getTaskListByAccUserId(DruidPooledConnection conn, String module, Long userId, Integer count,
 			Integer offset) throws Exception {
-		return taskListRepository.getList(conn, EXP.ins().key("module", module).andKey("acc_user_id", userId)
+		return taskListRepository.getList(conn, EXP.INS().key("module", module).andKey("acc_user_id", userId)
 				.andKey("status", TaskList.STATUS.SUCCESS.v()), count, offset);
 	}
 
@@ -282,14 +284,35 @@ public class TaskWallService {
 		TaskList tl = new TaskList();
 		tl.time = time;
 		tl.updateTime = new Date();
-		taskListRepository.update(conn, EXP.ins().key("id", taskListId), tl, true);
+		taskListRepository.update(conn, EXP.INS().key("id", taskListId), tl, true);
 	}
-	
+
 	public void setTaskListData(DruidPooledConnection conn, Long taskListId, String data) throws Exception {
 		TaskList tl = new TaskList();
 		tl.taskData = data;
 		tl.updateTime = new Date();
-		taskListRepository.update(conn, EXP.ins().key("id", taskListId), tl, true);
+		taskListRepository.update(conn, EXP.INS().key("id", taskListId), tl, true);
+	}
+
+	public JSONArray getTaskByGeo(DruidPooledConnection conn,SyncClient client, String module, String point, int meter, Byte type, Integer count,
+			Integer offset) throws Exception {
+		TSQL ts = new TSQL();
+		ts.Term(OP.AND, "module", module).GeoDistance(OP.AND, "pos", point, meter).Term(OP.AND, "status",
+				(long) TaskWall.STATUS.CREATED.v());
+		if (type != null) {
+			ts.Term(OP.AND, "type", (long) type);
+		}
+		ts.setLimit(count);
+		ts.setOffset(offset);
+		SearchQuery query = ts.build();
+		JSONObject tw = TSRepository.nativeSearch(client, taskWallRepository.getTableName(), "TaskWallIndex", query);
+		JSONArray json = tw.getJSONArray("list");
+		for (int i = 0; i < json.size(); i++) {
+			JSONObject j = json.getJSONObject(i);
+			User user = userService.getUserById(conn, j.getLong("upUserId"));
+			json.getJSONObject(i).put("user", user);
+		}
+		return json;
 	}
 
 }

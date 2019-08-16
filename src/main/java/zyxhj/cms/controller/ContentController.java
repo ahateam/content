@@ -91,17 +91,21 @@ public class ContentController extends Controller {
 	@ENUM(des = "任务完成状态")
 	public TaskList.STATUS[] taskListStatus = TaskList.STATUS.values();
 
+	@ENUM(des = "是否付费内容")
+	public Content.PAID[] contentPaid = Content.PAID.values();
+
 	/**
 	 * 
 	 */
-	@POSTAPI(path = "createContentDraft", //
-			des = "创建内容，保存为草稿", //
+	@POSTAPI(path = "addContent", //
+			des = "创建内容", //
 			ret = "所创建的对象"//
 	)
-	public APIResponse createContentDraft(//
+	public APIResponse addContent(//
 			@P(t = "用户编号") Long userId, //
 			@P(t = "用户编号") String module, //
 			@P(t = "内容类型Content.TYPE") Byte type, //
+			@P(t = "状态Content.STATUS") Byte status, //
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题") String title, //
 			@P(t = "数据（JSON）") String data //
@@ -111,31 +115,7 @@ public class ContentController extends Controller {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			return APIResponse.getNewSuccessResp(
-					contentService.createContentDraft(client, module, type, upUserId, upChannelId, title, data));
-		}
-	}
-
-	/**
-	 * 
-	 */
-	@POSTAPI(path = "createContentPublished", //
-			des = "创建内容，保存为正常（已发布）", //
-			ret = "所创建的对象"//
-	)
-	public APIResponse createContentPublished(//
-			@P(t = "用户编号") Long userId, //
-			@P(t = "用户编号") String module, //
-			@P(t = "内容类型Content.TYPE") Byte type, //
-			@P(t = "上传专栏编号", r = false) Long upChannelId, //
-			@P(t = "标题") String title, //
-			@P(t = "数据（JSON）") String data//
-	) throws Exception {
-		Long upUserId = userId;
-		try (DruidPooledConnection conn = dds.getConnection()) {
-			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
-
-			return APIResponse.getNewSuccessResp(
-					contentService.createContentPublished(client, module, type, upUserId, upChannelId, title, data));
+					contentService.addContent(client, module, type, status, upUserId, upChannelId, title, data));
 		}
 	}
 
@@ -149,14 +129,14 @@ public class ContentController extends Controller {
 	public APIResponse delContentById(//
 
 			@P(t = "用户编号") Long userId, //
-			@P(t = "片区编号") String id, //
+			@P(t = "片区编号") String _id, //
 			@P(t = "内容编号") Long contentId //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			contentService.auth(conn, client, contentId);// content鉴权
-			contentService.delContentById(client, id, contentId);
+			contentService.delContentById(client, _id, contentId);
 			return APIResponse.getNewSuccessResp();
 		}
 	}
@@ -270,14 +250,16 @@ public class ContentController extends Controller {
 	public APIResponse getContents(//
 			@P(t = "用户编号") Long userId, //
 			@P(t = "所属模块") String module, //
+			@P(t = "状态") Byte status, //
+			@P(t = "是否付费") Byte paid, //
 			Integer count, //
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			return APIResponse.getNewSuccessResp(
-					ServiceUtils.checkNull(contentService.getContents(conn, client, module, count, offset)));
+			return APIResponse.getNewSuccessResp(ServiceUtils
+					.checkNull(contentService.getContents(conn, client, module, status, paid, count, offset)));
 		}
 	}
 
@@ -570,13 +552,14 @@ public class ContentController extends Controller {
 			@P(t = "隶属") String module, //
 			@P(t = "专栏id") Long channelId, //
 			@P(t = "专栏状态") Byte status, //
+			@P(t = "是否付费", r = false) Byte paid, //
 			Integer count, //
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			return APIResponse.getNewSuccessResp(
-					channelService.getContentByChannelId(client, module, channelId, status, count, offset));
+					channelService.getContentByChannelId(client, module, channelId, status, paid, count, offset));
 		}
 	}
 
@@ -665,7 +648,7 @@ public class ContentController extends Controller {
 			@P(t = "需求标题") String title, //
 			@P(t = "需求金额") Double money, //
 			@P(t = "需求详细") String detail, //
-			@P(t = "需求详细") Byte status, //
+			@P(t = "需求状态") Byte status, //
 			@P(t = "任务参与人数") Byte accessStatus, //
 			@P(t = "标签") String tags //
 	) throws Exception {
@@ -777,6 +760,29 @@ public class ContentController extends Controller {
 
 			return APIResponse.getNewSuccessResp(
 					taskWallService.getTaskByUpUserId(client, module, upUserId, type, status, count, offset));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "getTaskByGeo", //
+			des = "根据用户选择的坐标以及用户选择的距离查看任务列表", //
+			ret = "任务列表"//
+	)
+	public APIResponse getTaskByGeo(//
+			@P(t = "隶属") String module, //
+			@P(t = "用户坐标") String point, //
+			@P(t = "距离用户距离") int meter, //
+			@P(t = "类型  如无此条件  为null", r = false) Byte type, //
+			Integer count, //
+			Integer offset//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(
+					taskWallService.getTaskByGeo(conn, client, module, point, meter, type, count, offset));
 		}
 	}
 
@@ -1106,8 +1112,8 @@ public class ContentController extends Controller {
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			return APIResponse
-					.getNewSuccessResp(commentService.getCommentByContentId(client, module, contentId, count, offset));
+			return APIResponse.getNewSuccessResp(
+					commentService.getCommentByContentId(conn, client, module, contentId, count, offset));
 		}
 	}
 

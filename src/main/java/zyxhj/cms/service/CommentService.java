@@ -5,6 +5,7 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
@@ -15,6 +16,8 @@ import com.alicloud.openservices.tablestore.model.search.sort.SortOrder;
 
 import zyxhj.cms.domian.Comment;
 import zyxhj.cms.repository.CommentRepository;
+import zyxhj.core.domain.User;
+import zyxhj.core.service.UserService;
 import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.data.ts.PrimaryKeyBuilder;
@@ -29,11 +32,13 @@ public class CommentService {
 
 	private CommentRepository commentRepository;
 	private UpvoteService upvoteService;
+	private UserService userService;
 
 	public CommentService() {
 		try {
 			commentRepository = Singleton.ins(CommentRepository.class);
 			upvoteService = Singleton.ins(UpvoteService.class);
+			userService = Singleton.ins(UserService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -77,8 +82,8 @@ public class CommentService {
 //	}
 
 	// 获取总评论数
-	public JSONObject getCommentByContentId(SyncClient client, String module, Long contentId, Integer count,
-			Integer offset) throws Exception {
+	public JSONObject getCommentByContentId(DruidPooledConnection conn, SyncClient client, String module,
+			Long contentId, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
 		ts.Match(OP.AND, "contentId", contentId.toString()).Term(OP.AND, "module", module);
 		ts.addSort(new FieldSort("createTime", SortOrder.ASC));
@@ -91,14 +96,16 @@ public class CommentService {
 		for (int i = 0; i < json.size(); i++) {
 			JSONObject j = json.getJSONObject(i);
 			Integer c = upvoteService.countUpvote(client, j.getLong("id"));
-//			Integer c = countCommentByContentId(client,);
-			System.out.println(c);
 			json.getJSONObject(i).put("commentTotalCount", c);
 		}
 		Integer contentUpvote = upvoteService.countUpvote(client, contentId);
 		comment.put("contentUpvote", contentUpvote);
-//		return comment.getInteger("totalCount");
 		comment.put("list", json);
+		for (int k = 0; k < json.size(); k++) {
+			JSONObject j = json.getJSONObject(k);
+			User user = userService.getUserById(conn, j.getLong("userId"));
+			json.getJSONObject(k).put("user", user);
+		}
 		return comment;
 	}
 
