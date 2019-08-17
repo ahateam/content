@@ -122,6 +122,31 @@ public class ContentController extends Controller {
 	/**
 	 * 
 	 */
+	@POSTAPI(path = "editContent", //
+			des = "修改内容", //
+			ret = ""//
+	)
+	public APIResponse editContent(//
+			@P(t = "用户编号") Long userId, //
+			@P(t = "内容分片编号") String _id, //
+			@P(t = "内容编号") Long id, //
+			@P(t = "状态Content.STATUS") Byte status, //
+			@P(t = "上传专栏编号", r = false) Long upChannelId, //
+			@P(t = "标题") String title, //
+			@P(t = "标签", r = false) String tags, //
+			@P(t = "数据（JSON）") String data //
+	) throws Exception {
+		Long upUserId = userId;
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
+			contentService.editContent(client, _id, id, status, upChannelId, title, tags, data);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 
+	 */
 	@POSTAPI(path = "delContentById", //
 			des = "删除内容（标记状态）", //
 			ret = "影响的记录行数"//
@@ -250,40 +275,42 @@ public class ContentController extends Controller {
 	public APIResponse getContents(//
 			@P(t = "用户编号") Long userId, //
 			@P(t = "所属模块") String module, //
-			@P(t = "状态") Byte status, //
-			@P(t = "是否付费") Byte paid, //
+			@P(t = "状态", r = false) Byte status, //
+			@P(t = "是否付费", r = false) Byte paid, //
+			@P(t = "类型", r = false) Byte type, //
+			@P(t = "标签", r = false) String tags, //
 			Integer count, //
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
-			return APIResponse.getNewSuccessResp(ServiceUtils
-					.checkNull(contentService.getContents(conn, client, module, status, paid, count, offset)));
+			return APIResponse.getNewSuccessResp(ServiceUtils.checkNull(
+					contentService.getContents(conn, client, module, status, paid, type, tags, count, offset)));
 		}
 	}
 
-	/**
-	 * 
-	 */
-	@POSTAPI(//
-			path = "getContentByType", //
-			des = "根据类型获取内容", //
-			ret = "内容列表"//
-	)
-	public APIResponse getContentByType(//
-			@P(t = "用户编号") Long userId, //
-			@P(t = "类型") Byte type, //
-			Integer count, //
-			Integer offset //
-	) throws Exception {
-		try (DruidPooledConnection conn = dds.getConnection()) {
-			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
-
-			return APIResponse.getNewSuccessResp(
-					ServiceUtils.checkNull(contentService.getContentByType(client, type, count, offset)));
-		}
-	}
+//	/**
+//	 * 
+//	 */
+//	@POSTAPI(//
+//			path = "getContentByType", //
+//			des = "根据类型获取内容", //
+//			ret = "内容列表"//
+//	)
+//	public APIResponse getContentByType(//
+//			@P(t = "用户编号") Long userId, //
+//			@P(t = "类型") Byte type, //
+//			Integer count, //
+//			Integer offset //
+//	) throws Exception {
+//		try (DruidPooledConnection conn = dds.getConnection()) {
+//			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
+//
+//			return APIResponse.getNewSuccessResp(
+//					ServiceUtils.checkNull(contentService.getContentByType(client, type, count, offset)));
+//		}
+//	}
 
 	/**
 	 * 
@@ -573,57 +600,60 @@ public class ContentController extends Controller {
 	)
 	public APIResponse getChannel(//
 			@P(t = "隶属") String module, //
-			Integer count, //
-			Integer offset //
-	) throws Exception {
-		try (DruidPooledConnection conn = dds.getConnection()) {
-
-			return APIResponse.getNewSuccessResp(channelService.getChannel(client, module, count, offset));
-		}
-	}
-
-	/**
-	 * 
-	 */
-	@POSTAPI(//
-			path = "getChannelByStatus", //
-			des = "根据状态获取专栏列表", //
-			ret = "专栏"//
-	)
-	public APIResponse getChannel(//
-			@P(t = "隶属") String module, //
-			@P(t = "状态") Byte status, //
+			@P(t = "状态", r = false) Byte status, //
+			@P(t = "标签", r = false) String tags, //
 			Integer count, //
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			return APIResponse
-					.getNewSuccessResp(channelService.getChannelByStatus(client, module, status, count, offset));
+					.getNewSuccessResp(channelService.getChannel(client, module, status, tags, count, offset));
 		}
 	}
-
-	/**
-	 * 
-	 */
-	@POSTAPI(//
-			path = "getChannelByTags", //
-			des = "根据标签获取专栏列表", //
-			ret = "专栏"//
-	)
-	public APIResponse getChannelByTags(//
-			@P(t = "隶属") String module, //
-			@P(t = "状态") Byte status, //
-			@P(t = "标签") String tags, //
-			Integer count, //
-			Integer offset //
-	) throws Exception {
-		try (DruidPooledConnection conn = dds.getConnection()) {
-
-			return APIResponse
-					.getNewSuccessResp(channelService.getChannelByTags(client, module, status, tags, count, offset));
-		}
-	}
+//
+//	/**
+//	 * 
+//	 */
+//	@POSTAPI(//
+//			path = "getChannelByStatus", //
+//			des = "根据状态获取专栏列表", //
+//			ret = "专栏"//
+//	)
+//	public APIResponse getChannel(//
+//			@P(t = "隶属") String module, //
+//			@P(t = "状态") Byte status, //
+//			Integer count, //
+//			Integer offset //
+//	) throws Exception {
+//		try (DruidPooledConnection conn = dds.getConnection()) {
+//
+//			return APIResponse
+//					.getNewSuccessResp(channelService.getChannelByStatus(client, module, status, count, offset));
+//		}
+//	}
+//
+//	/**
+//	 * 
+//	 */
+//	@POSTAPI(//
+//			path = "getChannelByTags", //
+//			des = "根据标签获取专栏列表", //
+//			ret = "专栏"//
+//	)
+//	public APIResponse getChannelByTags(//
+//			@P(t = "隶属") String module, //
+//			@P(t = "状态") Byte status, //
+//			@P(t = "标签") String tags, //
+//			Integer count, //
+//			Integer offset //
+//	) throws Exception {
+//		try (DruidPooledConnection conn = dds.getConnection()) {
+//
+//			return APIResponse
+//					.getNewSuccessResp(channelService.getChannelByTags(client, module, status, tags, count, offset));
+//		}
+//	}
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

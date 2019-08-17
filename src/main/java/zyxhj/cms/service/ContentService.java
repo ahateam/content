@@ -107,6 +107,30 @@ public class ContentService {
 		return c;
 	}
 
+	public void editContent(SyncClient client, String _id, Long id, Byte status, Long upChannelId, String title,
+			String tags, String data) throws Exception {
+		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", id).build();
+		ColumnBuilder cb = new ColumnBuilder();
+		if (status == Content.STATUS.PUBLISHED.v()) {
+			cb.add("status", (long) status);
+			if (upChannelId != null) {
+				cb.add("upChannelid", upChannelId);
+			}
+			if (tags != null) {
+				cb.add("tags", tags);
+			}
+			cb.add("title", title);
+			cb.add("data", data);
+			cb.add("updateTime", new Date());
+		} else if (status == Content.STATUS.PUBLISHEDFAIL.v()) {
+			cb.add("status", (long) Content.STATUS.PUBLISHEDFAIL.v());
+			cb.add("updateTime", new Date());
+		}
+		List<Column> columns = cb.build();
+		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, true, columns);
+
+	}
+
 	/**
 	 * 根据编号删除内容
 	 */
@@ -129,7 +153,7 @@ public class ContentService {
 	 * 类容列表
 	 */
 	public JSONArray getContents(DruidPooledConnection conn, SyncClient client, String module, Byte status, Byte paid,
-			Integer count, Integer offset) throws Exception {
+			Byte type, String tags, Integer count, Integer offset) throws Exception {
 
 		TSQL ts = new TSQL();
 		ts.Terms(OP.AND, "module", module);
@@ -139,7 +163,13 @@ public class ContentService {
 		if (paid != null) {
 			ts.Term(OP.AND, "paid", (long) paid);
 		}
-		ts.addSort(new FieldSort("createTime", SortOrder.DESC));
+		if (type != null) {
+			ts.Term(OP.AND, "type", (long) type);
+		}
+		if (tags != null) {
+			ts.Terms(OP.AND, "tags", tags);
+		}
+		ts.addSort(new FieldSort("updateTime", SortOrder.DESC));
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
@@ -153,15 +183,15 @@ public class ContentService {
 		return json;
 	}
 
-	public JSONObject getContentByType(SyncClient client, Byte type, Integer count, Integer offset) throws Exception {
-		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v()).Term(OP.AND,
-				"paid", (long) 0);
-		ts.setLimit(count);
-		ts.setOffset(offset);
-		SearchQuery query = ts.build();
-		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
-	}
+//	public JSONObject getContentByType(SyncClient client, Byte type, Integer count, Integer offset) throws Exception {
+//		TSQL ts = new TSQL();
+//		ts.Term(OP.AND, "type", (long) type).Term(OP.AND, "status", (long) Content.STATUS.NORMAL.v()).Term(OP.AND,
+//				"paid", (long) 0);
+//		ts.setLimit(count);
+//		ts.setOffset(offset);
+//		SearchQuery query = ts.build();
+//		return TSRepository.nativeSearch(client, contentRepository.getTableName(), "ContentIndex", query);
+//	}
 
 	/**
 	 * 根据关键字搜索内容

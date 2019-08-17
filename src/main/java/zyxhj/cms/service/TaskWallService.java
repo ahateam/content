@@ -97,6 +97,8 @@ public class TaskWallService {
 		List<Column> columns = cb.build();
 		TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, false, columns);
 	}
+	
+	
 
 	/**
 	 * 根据标签获取任务列表
@@ -219,7 +221,6 @@ public class TaskWallService {
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		} else if (status == TaskList.STATUS.SUCCESSEXAMINE.v()) {
-			System.out.println("status=" + status);
 			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
 			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINETASK.v());

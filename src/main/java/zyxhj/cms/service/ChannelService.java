@@ -115,39 +115,47 @@ public class ChannelService {
 	/**
 	 * 获取专栏列表
 	 */
-	public JSONObject getChannel(SyncClient client, String module, Integer count, Integer offset) throws Exception {
-
-		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) Channel.STATUS.NORMAL.v()).build();
-		ts.setLimit(count);
-		ts.setOffset(offset);
-		SearchQuery query = ts.build();
-		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
-	}
-
-	// 获取专栏列表
-	public JSONObject getChannelByStatus(SyncClient client, String module, Byte status, Integer count, Integer offset)
-			throws Exception {
-
-		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status).build();
-		ts.setLimit(count);
-		ts.setOffset(offset);
-		SearchQuery query = ts.build();
-		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
-	}
-
-	// 根据标签获取专栏
-	public JSONObject getChannelByTags(SyncClient client, String module, Byte status, String tags, Integer count,
+	public JSONObject getChannel(SyncClient client, String module, Byte status, String tags, Integer count,
 			Integer offset) throws Exception {
+
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status).Terms(OP.AND, "tags", tags).build();
+		ts.Term(OP.AND, "module", module);
+		if (status != null) {
+			ts.Term(OP.AND, "status", (long) status);
+		}
+		if (tags != null) {
+			ts.Terms(OP.AND, "tags", tags);
+		}
 		ts.setLimit(count);
 		ts.setOffset(offset);
 		SearchQuery query = ts.build();
-
 		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
-
 	}
+
+//
+//	// 获取专栏列表
+//	public JSONObject getChannelByStatus(SyncClient client, String module, Byte status, Integer count, Integer offset)
+//			throws Exception {
+//
+//		TSQL ts = new TSQL();
+//		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status).build();
+//		ts.setLimit(count);
+//		ts.setOffset(offset);
+//		SearchQuery query = ts.build();
+//		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
+//	}
+//
+//	// 根据标签获取专栏
+//	public JSONObject getChannelByTags(SyncClient client, String module, Byte status, String tags, Integer count,
+//			Integer offset) throws Exception {
+//		TSQL ts = new TSQL();
+//		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status).Terms(OP.AND, "tags", tags).build();
+//		ts.setLimit(count);
+//		ts.setOffset(offset);
+//		SearchQuery query = ts.build();
+//
+//		return TSRepository.nativeSearch(client, channelRepository.getTableName(), "ChannelIndex", query);
+//
+//	}
 
 }

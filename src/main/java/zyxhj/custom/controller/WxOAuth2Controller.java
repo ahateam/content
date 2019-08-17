@@ -3,7 +3,10 @@ package zyxhj.custom.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.util.RequestPayload;
+
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
+import me.chanjar.weixin.mp.bean.card.PayInfo;
 import zyxhj.custom.service.WxDataService;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
