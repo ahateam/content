@@ -86,7 +86,7 @@ public class ChannelTest {
 
 		try {
 
-			System.out.println(channelService.getChannel(client, module, 10, 0));
+//			System.out.println(channelService.getChannel(client, module, 10, 0));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -100,7 +100,7 @@ public class ChannelTest {
 		Integer count = 10;
 		Integer offset = 0;
 		try {
-			System.out.println(channelService.getChannelByStatus(client, module, status, count, offset));
+//			System.out.println(channelService.getChannelByStatus(client, module, status, count, offset));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

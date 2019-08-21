@@ -17,8 +17,10 @@ import com.alicloud.openservices.tablestore.model.search.SearchQuery;
 import com.alicloud.openservices.tablestore.model.search.sort.FieldSort;
 import com.alicloud.openservices.tablestore.model.search.sort.SortOrder;
 
+import zyxhj.cms.domian.Bookmark;
 import zyxhj.cms.domian.Content;
 import zyxhj.cms.domian.Template;
+import zyxhj.cms.repository.BookmarkRepository;
 import zyxhj.cms.repository.ContentRepository;
 import zyxhj.cms.repository.TemplateRepository;
 import zyxhj.core.domain.User;
@@ -42,13 +44,14 @@ public class ContentService {
 	private ContentRepository contentRepository;
 	private UserService userService;
 	private TemplateRepository templateRepository;
+	private BookmarkRepository bookmarkRepository;
 
 	public ContentService() {
 		try {
 			contentRepository = Singleton.ins(ContentRepository.class);
 			userService = Singleton.ins(UserService.class);
 			templateRepository = Singleton.ins(TemplateRepository.class);
-
+			bookmarkRepository = Singleton.ins(BookmarkRepository.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -76,7 +79,7 @@ public class ContentService {
 	}
 
 	public Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId, Long upChannelId,
-			String title, String data) throws Exception {
+			String title, String data, Byte paid) throws Exception {
 
 		Long id = IDUtils.getSimpleId();
 		Content c = new Content();
@@ -91,7 +94,11 @@ public class ContentService {
 		c.createTime = new Date();
 		c.updateTime = c.createTime;
 		c.upUserId = upUserId;
-		c.upChannelId = upChannelId;
+		if (upChannelId == null) {
+			c.upChannelId = 0L;
+		} else {
+			c.upChannelId = upChannelId;
+		}
 
 		c.title = title;
 		if (StringUtils.isBlank(data)) {
@@ -121,10 +128,10 @@ public class ContentService {
 			}
 			cb.add("title", title);
 			cb.add("data", data);
-			cb.add("updateTime", new Date());
+			cb.add("updateTime", new Date().getTime());
 		} else if (status == Content.STATUS.PUBLISHEDFAIL.v()) {
 			cb.add("status", (long) Content.STATUS.PUBLISHEDFAIL.v());
-			cb.add("updateTime", new Date());
+			cb.add("updateTime", new Date().getTime());
 		}
 		List<Column> columns = cb.build();
 		TSRepository.nativeUpdate(client, contentRepository.getTableName(), pk, true, columns);
@@ -167,6 +174,7 @@ public class ContentService {
 			ts.Term(OP.AND, "type", (long) type);
 		}
 		if (tags != null) {
+			System.out.println("11111");
 			ts.Terms(OP.AND, "tags", tags);
 		}
 		ts.addSort(new FieldSort("updateTime", SortOrder.DESC));
@@ -307,10 +315,36 @@ public class ContentService {
 		return json;
 	}
 
-	public List<Template> getTemplate(DruidPooledConnection conn, String module, Byte type) throws Exception {
-		return templateRepository.getList(conn,
-				EXP.INS().key("module", module).andKey("type", type).andKey("status", Template.STATUS.OPEN.v()), 512,
-				0);
+	// 创建模板
+	public void addTemplate(DruidPooledConnection conn, String module, String name, String tags, String data,
+			Double money, Byte status, Byte type) throws Exception {
+		Template te = new Template();
+		te.id = IDUtils.getSimpleId();
+		te.name = name;
+		te.module = module;
+		te.tags = tags;
+		te.data = data;
+		te.money = money;
+		te.status = status;
+		te.type = type;
+		templateRepository.insert(conn, te);
+
+	}
+
+	public List<Template> getTemplate(DruidPooledConnection conn, String module, Byte type, Byte status, String tags,
+			Integer count, Integer offset) throws Exception {
+		EXP ex = EXP.INS();
+		ex.key("module", module);
+		if(type != null) {
+			ex.andKey("type", type);
+		}
+		if(status != null) {
+			ex.andKey("status", status);
+		}
+		if(tags != null) {
+			ex.and(EXP.JSON_CONTAINS("tags", "$", tags));
+		}
+		return templateRepository.getList(conn, ex, count, offset);
 	}
 
 	public List<Template> getTemplateByTag(DruidPooledConnection conn, String module, String tags, Byte type,
@@ -318,6 +352,64 @@ public class ContentService {
 		return templateRepository.getList(conn,
 				EXP.INS().key("module", module).andKey("type", type).and(EXP.JSON_CONTAINS("tags", "$", tags)), count,
 				offset);
+	}
+
+	// 购买内容
+	public void addBookmark(DruidPooledConnection conn, String module, Long userId, Long contentId) throws Exception {
+		Bookmark bo = new Bookmark();
+		bo.userId = userId;
+		bo.contentId = contentId;
+		bo.module = module;
+		bo.createTime = new Date();
+
+		try {
+			bookmarkRepository.insert(conn, bo);
+		} catch (ServerException e) {
+			throw new ServerException(BaseRC.CONTENT_BY_ERROR);
+		}
+	}
+
+	// 查看是否购买当前内容 如果没购买 则返回空值 如已经购买 则返回相应的内容
+	public JSONObject checkBookmark(SyncClient client, DruidPooledConnection conn, Long userId, Long contentId)
+			throws Exception {
+		Bookmark bookmark = bookmarkRepository.get(conn,
+				EXP.INS().key("user_id", userId).andKey("content_id", contentId));
+		if (bookmark != null) {
+			JSONArray json = new JSONArray();
+			json.add(contentId);
+			return getContentsByIds(client, json);
+		} else {
+			return null;
+		}
+	}
+
+	// 根据内容id获取内容列表
+	private JSONObject getContentsByIds(SyncClient client, JSONArray contentIds) throws Exception {
+		TSQL ts = new TSQL();
+		if (contentIds != null && contentIds.size() > 0) {
+			for (int i = 0; i < contentIds.size(); i++) {
+				ts.Term(OP.OR, "id", contentIds.get(i));
+			}
+			SearchQuery query = ts.build();
+			return contentRepository.search(client, query);
+		} else {
+			return null;
+		}
+	}
+
+	// 获取用户购买的内容
+	public JSONObject getUserBuyContent(SyncClient client, DruidPooledConnection conn, Long userId) throws Exception {
+		List<Bookmark> list = bookmarkRepository.getList(conn, EXP.INS().key("user_id", userId), 512, 0);
+		if (list != null && list.size() > 0) {
+			JSONArray json = new JSONArray();
+			for (Bookmark bookmark : list) {
+				json.add(bookmark.contentId);
+			}
+			return getContentsByIds(client, json);
+		} else {
+			return null;
+		}
+
 	}
 
 }

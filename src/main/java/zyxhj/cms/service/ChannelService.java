@@ -6,13 +6,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.druid.pool.DruidPooledConnection;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.Column;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
-import com.alicloud.openservices.tablestore.model.PrimaryKeyValue;
 import com.alicloud.openservices.tablestore.model.search.SearchQuery;
 
 import zyxhj.cms.domian.Channel;
@@ -20,7 +17,6 @@ import zyxhj.cms.repository.ChannelRepository;
 import zyxhj.cms.repository.ContentRepository;
 import zyxhj.utils.IDUtils;
 import zyxhj.utils.Singleton;
-import zyxhj.utils.api.ServerException;
 import zyxhj.utils.data.ts.ColumnBuilder;
 import zyxhj.utils.data.ts.PrimaryKeyBuilder;
 import zyxhj.utils.data.ts.TSQL;
@@ -101,7 +97,10 @@ public class ChannelService {
 			Integer count, Integer offset) throws Exception {
 
 		TSQL ts = new TSQL();
-		ts.Terms(OP.AND, "module", module).Term(OP.AND, "upChannelId", channelId).Term(OP.AND, "status", (long) status);
+		ts.Terms(OP.AND, "module", module).Term(OP.AND, "upChannelId", channelId);
+		if (status != null) {
+			ts.Term(OP.AND, "status", (long) status);
+		}
 		if (paid != null) {
 			ts.Term(OP.AND, "paid", (long) paid);
 		}

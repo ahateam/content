@@ -97,8 +97,6 @@ public class TaskWallService {
 		List<Column> columns = cb.build();
 		TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, false, columns);
 	}
-	
-	
 
 	/**
 	 * 根据标签获取任务列表
@@ -108,7 +106,10 @@ public class TaskWallService {
 	public JSONArray getTask(DruidPooledConnection conn, SyncClient client, String module, Byte type, Byte status,
 			String tags, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "module", module).Term(OP.AND, "status", (long) status);
+		ts.Term(OP.AND, "module", module);
+		if (status != null) {
+			ts.Term(OP.AND, "status", (long) status);
+		}
 		if (type != null) {
 			ts.Term(OP.AND, "type", (long) type);
 		}
@@ -208,39 +209,33 @@ public class TaskWallService {
 		TaskList ta = new TaskList();
 		ta.status = status;
 		taskListRepository.update(conn, EXP.INS().key("id", taskListId).andKey("acc_user_id", userId), ta, true);
+		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
+		ColumnBuilder cb = new ColumnBuilder();
 		if (status == TaskList.STATUS.EXAMINESUCCESS.v()) {
 			ta.status = TaskList.STATUS.FAIL.v();
 			ta.updateTime = new Date();
 			taskListRepository.update(conn,
 					EXP.INS().key("task_id", taskId).andKey("status", TaskList.STATUS.EXAMINE.v()), ta, true);
-
-			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
-			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("status", (long) TaskWall.STATUS.RECEIVE.v());
 			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINEUSERSUCCESS.v());
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		} else if (status == TaskList.STATUS.SUCCESSEXAMINE.v()) {
-			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
-			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINETASK.v());
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		} else if (status == TaskList.STATUS.REDO.v()) {
-			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
-			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.EXAMINEUSERSUCCESS.v());
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		} else if (status == TaskList.STATUS.SUCCESS.v()) {
-			PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("id", taskId).build();
-			ColumnBuilder cb = new ColumnBuilder();
 			cb.add("taskStatus", (long) TaskWall.TASKSTATUS.SUCCESS.v());
 			List<Column> columns = cb.build();
 			TSRepository.nativeUpdate(client, taskWallRepository.getTableName(), pk, true, columns);
 		}
 
 	}
+	
 
 	// 根据任务类型或状态查询任务
 	public JSONArray getTaskListByTypeORStatus(DruidPooledConnection conn, SyncClient client, String module,
@@ -295,8 +290,8 @@ public class TaskWallService {
 		taskListRepository.update(conn, EXP.INS().key("id", taskListId), tl, true);
 	}
 
-	public JSONArray getTaskByGeo(DruidPooledConnection conn,SyncClient client, String module, String point, int meter, Byte type, Integer count,
-			Integer offset) throws Exception {
+	public JSONArray getTaskByGeo(DruidPooledConnection conn, SyncClient client, String module, String point, int meter,
+			Byte type, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
 		ts.Term(OP.AND, "module", module).GeoDistance(OP.AND, "pos", point, meter).Term(OP.AND, "status",
 				(long) TaskWall.STATUS.CREATED.v());

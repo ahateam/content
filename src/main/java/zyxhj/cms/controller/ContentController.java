@@ -108,14 +108,15 @@ public class ContentController extends Controller {
 			@P(t = "状态Content.STATUS") Byte status, //
 			@P(t = "上传专栏编号", r = false) Long upChannelId, //
 			@P(t = "标题") String title, //
-			@P(t = "数据（JSON）") String data //
+			@P(t = "数据（JSON）") String data, //
+			@P(t = "是否付费 0免费  1付费") Byte paid //
 	) throws Exception {
 		Long upUserId = userId;
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			User user = ServiceUtils.userAuth(conn, userId);// user鉴权
 
 			return APIResponse.getNewSuccessResp(
-					contentService.addContent(client, module, type, status, upUserId, upChannelId, title, data));
+					contentService.addContent(client, module, type, status, upUserId, upChannelId, title, data, paid));
 		}
 	}
 
@@ -578,7 +579,7 @@ public class ContentController extends Controller {
 	public APIResponse getContentByChannelId(//
 			@P(t = "隶属") String module, //
 			@P(t = "专栏id") Long channelId, //
-			@P(t = "专栏状态") Byte status, //
+			@P(t = "专栏状态", r = false) Byte status, //
 			@P(t = "是否付费", r = false) Byte paid, //
 			Integer count, //
 			Integer offset //
@@ -706,6 +707,25 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			taskWallService.editTaskListStatus(conn, client, task_id, userId, taskListId, taskId, status);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	@POSTAPI(//
+			path = "editTaskWallStatus", //
+			des = "修改任务状态", //
+			ret = ""//
+	)
+	public APIResponse editTaskWallStatus(//
+			@P(t = "分片id") String _id, //
+			@P(t = "任务id") Long taskWallId, //
+			@P(t = "状态") Byte status //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			taskWallService.editTaskWallStatus(client, _id, taskWallId, status);
 			return APIResponse.getNewSuccessResp();
 		}
 	}
@@ -1030,6 +1050,33 @@ public class ContentController extends Controller {
 		}
 	}
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//模板
+	/**
+	 * 创建模板
+	 */
+	@POSTAPI(//
+			path = "addTemplate", //
+			des = "创建模板", //
+			ret = "")
+	public APIResponse addTemplate(//
+			@P(t = "隶属") String module, //
+			@P(t = "类型") Byte type, //
+			@P(t = "状态") Byte status, //
+			@P(t = "模板名称") String name, //
+			@P(t = "模板标签") String tags, //
+			@P(t = "金额") Double money, //
+			@P(t = "模板数据") String data//
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			contentService.addTemplate(conn, module, name, tags, data, money, status, type);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
 	/**
 	 * 获取模板
 	 */
@@ -1039,10 +1086,14 @@ public class ContentController extends Controller {
 			ret = "")
 	public APIResponse getTemplate(//
 			@P(t = "隶属") String module, //
-			@P(t = "类型") Byte type //
+			@P(t = "类型", r = false) Byte type, //
+			@P(t = "状态", r = false) Byte status, //
+			@P(t = "标签",r = false) String tags, //
+			Integer count, //
+			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			return APIResponse.getNewSuccessResp(contentService.getTemplate(conn, module, type));
+			return APIResponse.getNewSuccessResp(contentService.getTemplate(conn, module, type, status,tags,count,offset));
 		}
 	}
 
@@ -1199,6 +1250,63 @@ public class ContentController extends Controller {
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 			return APIResponse.getNewSuccessResp(upvoteService.checkUpvote(client, contentId, userId));
+		}
+	}
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//购买内容
+
+	/**
+	 * 购买内容添加
+	 */
+	@POSTAPI(//
+			path = "addBookmark", //
+			des = "添加购买内容", //
+			ret = " ")
+	public APIResponse addBookmark(//
+			@P(t = "内容编号") Long contentId, //
+			@P(t = "用户编号") Long userId, //
+			@P(t = "隶属") String module //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+			contentService.addBookmark(conn, module, userId, contentId);
+			return APIResponse.getNewSuccessResp();
+		}
+	}
+
+	/**
+	 * 查看用户是否已购买此内容
+	 */
+	@POSTAPI(//
+			path = "checkBookmark", //
+			des = "查看用户是否已购买此内容 如果已购买 则返回内容详情  未购买返回null", //
+			ret = "用户购买的内容详情 ")
+	public APIResponse checkBookmark(//
+			@P(t = "内容编号") Long contentId, //
+			@P(t = "用户编号") Long userId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(contentService.checkBookmark(client, conn, userId, contentId));
+		}
+	}
+
+	/**
+	 * 用户购买的内容列表
+	 */
+	@POSTAPI(//
+			path = "getUserBuyContent", //
+			des = "获取用户已购买的内容列表", //
+			ret = "内容列表 ")
+	public APIResponse getUserBuyContent(//
+			@P(t = "用户编号") Long userId //
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
+
+			return APIResponse.getNewSuccessResp(contentService.getUserBuyContent(client, conn, userId));
 		}
 	}
 

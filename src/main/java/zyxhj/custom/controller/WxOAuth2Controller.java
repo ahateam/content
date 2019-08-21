@@ -3,11 +3,9 @@ package zyxhj.custom.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.util.RequestPayload;
-
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
-import me.chanjar.weixin.mp.bean.card.PayInfo;
 import zyxhj.custom.service.WxDataService;
+import zyxhj.custom.service.WxPaycService;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
 import zyxhj.utils.api.Controller;
@@ -18,11 +16,13 @@ public class WxOAuth2Controller extends Controller {
 
 	private WxDataService wxDataService;
 	// private WxMpMessageRouter wxMpMessageRouter;
+	private WxPaycService wxPaycService;
 
 	public WxOAuth2Controller(String node) {
 		super(node);
 		try {
 			wxDataService = Singleton.ins(WxDataService.class);
+			wxPaycService = Singleton.ins(WxPaycService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -92,6 +92,23 @@ public class WxOAuth2Controller extends Controller {
 		// System.err.println(wxMpUser.getOpenId());
 		return APIResponse.getNewSuccessResp(jsCode2SessionInfo);
 	}
+
+	/*
+	 * 支付
+	 */
+	@POSTAPI(path = "pay", //
+			des = "支付"//
+	)
+	public APIResponse pay(//
+			@P(t = "价格") Float price, //
+			@P(t = "哪个平台支付 1支付宝 2微信支付") Integer istype, //
+			@P(t = "商品编号") String orderUid, //
+			@P(t = "商品名称") String goodsnmae //
+	) throws Exception {
+
+		return APIResponse.getNewSuccessResp(wxPaycService.pay(price, istype, orderUid, goodsnmae));
+	}
+
 ////
 ////	/*
 ////	 * 获取二维码
