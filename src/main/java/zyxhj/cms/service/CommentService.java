@@ -82,6 +82,8 @@ public class CommentService {
 //	}
 
 	// 获取总评论数
+
+	// TODO  使用索引
 	public JSONObject getCommentByContentId(DruidPooledConnection conn, SyncClient client, String module,
 			Long contentId, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();

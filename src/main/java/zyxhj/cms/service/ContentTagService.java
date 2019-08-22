@@ -98,16 +98,7 @@ public class ContentTagService {
 		group.keyword = keyword;
 		group.remark = remark;
 		group.status = ContentTagGroup.STATUS.OPEN.v();
-		if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.HOME.v()) {
-			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.HOME.v();
-		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.VIP.v()) {
-			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.VIP.v();
-		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.TASK.v()) {
-			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.TASK.v();
-		} else if (tagGroupType == ContentTagGroup.TAGGROUPTYPE.TEMPLATE.v()) {
-			group.tagGroupType = ContentTagGroup.TAGGROUPTYPE.TEMPLATE.v();
-		}
-
+		group.tagGroupType = tagGroupType;
 		groupRepository.insert(conn, group);
 
 		return group;

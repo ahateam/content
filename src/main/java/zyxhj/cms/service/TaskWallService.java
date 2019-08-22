@@ -235,7 +235,6 @@ public class TaskWallService {
 		}
 
 	}
-	
 
 	// 根据任务类型或状态查询任务
 	public JSONArray getTaskListByTypeORStatus(DruidPooledConnection conn, SyncClient client, String module,
@@ -291,12 +290,14 @@ public class TaskWallService {
 	}
 
 	public JSONArray getTaskByGeo(DruidPooledConnection conn, SyncClient client, String module, String point, int meter,
-			Byte type, Integer count, Integer offset) throws Exception {
+			Byte type, Byte status, Integer count, Integer offset) throws Exception {
 		TSQL ts = new TSQL();
-		ts.Term(OP.AND, "module", module).GeoDistance(OP.AND, "pos", point, meter).Term(OP.AND, "status",
-				(long) TaskWall.STATUS.CREATED.v());
+		ts.Term(OP.AND, "module", module).GeoDistance(OP.AND, "pos", point, meter);
 		if (type != null) {
 			ts.Term(OP.AND, "type", (long) type);
+		}
+		if (status != null) {
+			ts.Term(OP.AND, "status",(long) status);
 		}
 		ts.setLimit(count);
 		ts.setOffset(offset);

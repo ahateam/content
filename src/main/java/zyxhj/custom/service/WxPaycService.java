@@ -20,7 +20,7 @@ public class WxPaycService {
 		}
 	}
 
-	public Map<String, Object> pay(float price, int istype,String orderUid,String goodsnmae) throws Exception {
+	public Map<String, Object> pay(float price, int istype, String orderUid, String goodsnmae) throws Exception {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		Map<String, Object> remoteMap = new HashMap<String, Object>();
 		remoteMap.put("price", price);
@@ -31,14 +31,13 @@ public class WxPaycService {
 		resultMap.put("data", PayUtil.payOrder(remoteMap));
 		return resultMap;
 	}
-	
-	
-	public void notifyPay(GLpayApi payAPI) throws Exception {
+
+	public String notifyPay(GLpayApi payAPI) throws Exception {
 		// 保证密钥一致性
 		if (PayUtil.checkPayKey(payAPI)) {
-			// TODO 做自己想做的
+			return "OK";
 		} else {
-			// TODO 该怎么做就怎么做
+			return "ERROR";
 		}
 	}
 

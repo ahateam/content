@@ -16,7 +16,7 @@ public class PayUtil {
 
 	public static String UID = "3150";
 
-	public static String NOTIFY_URL = "http://您自己的域名/qpay/notifyPay";
+	public static String NOTIFY_URL = "http://47.99.209.235/con/content/wxOa/notifyPay";
 
 	public static String RETURN_URL = "http://您自己的域名/qpay/returnPay";
 

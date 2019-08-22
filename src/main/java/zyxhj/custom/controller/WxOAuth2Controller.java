@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
+import zyxhj.custom.domain.GLpayApi;
 import zyxhj.custom.service.WxDataService;
 import zyxhj.custom.service.WxPaycService;
 import zyxhj.utils.Singleton;
@@ -107,6 +108,19 @@ public class WxOAuth2Controller extends Controller {
 	) throws Exception {
 
 		return APIResponse.getNewSuccessResp(wxPaycService.pay(price, istype, orderUid, goodsnmae));
+	}
+
+	/*
+	 * 支付
+	 */
+	@POSTAPI(path = "notifyPay", //
+			des = "notifyPay"//
+	)
+	public APIResponse notifyPay(//
+			@P(t = "回调") GLpayApi payAPI //
+	) throws Exception {
+
+		return APIResponse.getNewSuccessResp(wxPaycService.notifyPay(payAPI));
 	}
 
 ////

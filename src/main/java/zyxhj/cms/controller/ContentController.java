@@ -826,13 +826,14 @@ public class ContentController extends Controller {
 			@P(t = "用户坐标") String point, //
 			@P(t = "距离用户距离") int meter, //
 			@P(t = "类型  如无此条件  为null", r = false) Byte type, //
+			@P(t = "状态  如无此条件  为null", r = false) Byte status, //
 			Integer count, //
 			Integer offset//
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
 
 			return APIResponse.getNewSuccessResp(
-					taskWallService.getTaskByGeo(conn, client, module, point, meter, type, count, offset));
+					taskWallService.getTaskByGeo(conn, client, module, point, meter, type, status, count, offset));
 		}
 	}
 
@@ -1088,12 +1089,13 @@ public class ContentController extends Controller {
 			@P(t = "隶属") String module, //
 			@P(t = "类型", r = false) Byte type, //
 			@P(t = "状态", r = false) Byte status, //
-			@P(t = "标签",r = false) String tags, //
+			@P(t = "标签", r = false) String tags, //
 			Integer count, //
 			Integer offset //
 	) throws Exception {
 		try (DruidPooledConnection conn = dds.getConnection()) {
-			return APIResponse.getNewSuccessResp(contentService.getTemplate(conn, module, type, status,tags,count,offset));
+			return APIResponse
+					.getNewSuccessResp(contentService.getTemplate(conn, module, type, status, tags, count, offset));
 		}
 	}
 
