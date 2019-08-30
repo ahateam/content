@@ -1,13 +1,7 @@
 package zyxhj.custom.service;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import zyxhj.custom.domain.GLpayApi;
-import zyxhj.pay.util.PayUtil;
 
 public class WxPaycService {
 
@@ -20,26 +14,26 @@ public class WxPaycService {
 		}
 	}
 
-	public Map<String, Object> pay(float price, int istype, String orderUid, String goodsnmae) throws Exception {
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		Map<String, Object> remoteMap = new HashMap<String, Object>();
-		remoteMap.put("price", price);
-		remoteMap.put("istype", istype);
-		remoteMap.put("orderid", PayUtil.getOrderIdByUUId());
-		remoteMap.put("orderuid", orderUid);
-		remoteMap.put("goodsname", goodsnmae);
-		resultMap.put("data", PayUtil.payOrder(remoteMap));
-		return resultMap;
-	}
-
-	public String notifyPay(GLpayApi payAPI) throws Exception {
-		// 保证密钥一致性
-		if (PayUtil.checkPayKey(payAPI)) {
-			return "OK";
-		} else {
-			return "ERROR";
-		}
-	}
+//	public Map<String, Object> pay(float price, int istype, String orderUid, String goodsnmae) throws Exception {
+//		Map<String, Object> resultMap = new HashMap<String, Object>();
+//		Map<String, Object> remoteMap = new HashMap<String, Object>();
+//		remoteMap.put("price", price);
+//		remoteMap.put("istype", istype);
+//		remoteMap.put("orderid", PayUtil.getOrderIdByUUId());
+//		remoteMap.put("orderuid", orderUid);
+//		remoteMap.put("goodsname", goodsnmae);
+//		resultMap.put("data", PayUtil.payOrder(remoteMap));
+//		return resultMap;
+//	}
+//
+//	public String notifyPay(GLpayApi payAPI) throws Exception {
+//		// 保证密钥一致性
+//		if (PayUtil.checkPayKey(payAPI)) {
+//			return "OK";
+//		} else {
+//			return "ERROR";
+//		}
+//	}
 
 //	public ModelAndView returnPay(String orderid) {
 //		boolean isTrue = false;

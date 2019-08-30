@@ -4,9 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
-import zyxhj.custom.domain.GLpayApi;
 import zyxhj.custom.service.WxDataService;
-import zyxhj.custom.service.WxPaycService;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
 import zyxhj.utils.api.Controller;
@@ -17,13 +15,13 @@ public class WxOAuth2Controller extends Controller {
 
 	private WxDataService wxDataService;
 	// private WxMpMessageRouter wxMpMessageRouter;
-	private WxPaycService wxPaycService;
+//	private WxPaycService wxPaycService;
 
 	public WxOAuth2Controller(String node) {
 		super(node);
 		try {
 			wxDataService = Singleton.ins(WxDataService.class);
-			wxPaycService = Singleton.ins(WxPaycService.class);
+//			wxPaycService = Singleton.ins(WxPaycService.class);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -94,34 +92,34 @@ public class WxOAuth2Controller extends Controller {
 		return APIResponse.getNewSuccessResp(jsCode2SessionInfo);
 	}
 
-	/*
-	 * 支付
-	 */
-	@POSTAPI(path = "pay", //
-			des = "支付"//
-	)
-	public APIResponse pay(//
-			@P(t = "价格") Float price, //
-			@P(t = "哪个平台支付 1支付宝 2微信支付") Integer istype, //
-			@P(t = "商品编号") String orderUid, //
-			@P(t = "商品名称") String goodsnmae //
-	) throws Exception {
-
-		return APIResponse.getNewSuccessResp(wxPaycService.pay(price, istype, orderUid, goodsnmae));
-	}
-
-	/*
-	 * 支付
-	 */
-	@POSTAPI(path = "notifyPay", //
-			des = "notifyPay"//
-	)
-	public APIResponse notifyPay(//
-			@P(t = "回调") GLpayApi payAPI //
-	) throws Exception {
-
-		return APIResponse.getNewSuccessResp(wxPaycService.notifyPay(payAPI));
-	}
+//	/*
+//	 * 支付
+//	 */
+//	@POSTAPI(path = "pay", //
+//			des = "支付"//
+//	)
+//	public APIResponse pay(//
+//			@P(t = "价格") Float price, //
+//			@P(t = "哪个平台支付 1支付宝 2微信支付") Integer istype, //
+//			@P(t = "商品编号") String orderUid, //
+//			@P(t = "商品名称") String goodsnmae //
+//	) throws Exception {
+//
+//		return APIResponse.getNewSuccessResp(wxPaycService.pay(price, istype, orderUid, goodsnmae));
+//	}
+//
+//	/*
+//	 * 支付
+//	 */
+//	@POSTAPI(path = "notifyPay", //
+//			des = "notifyPay"//
+//	)
+//	public APIResponse notifyPay(//
+//			@P(t = "回调") GLpayApi payAPI //
+//	) throws Exception {
+//
+//		return APIResponse.getNewSuccessResp(wxPaycService.notifyPay(payAPI));
+//	}
 
 ////
 ////	/*
