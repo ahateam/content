@@ -61,6 +61,7 @@ public class ContentService {
 	/**
 	 * 验证内容是否合法：判断是否下线，等等。TODO 目前待完善
 	 */
+	
 	public JSONObject auth(DruidPooledConnection conn, SyncClient client, Long contentId) throws Exception {
 		// 先判断user是否存在
 		TSQL ts = new TSQL();
@@ -79,7 +80,11 @@ public class ContentService {
 		}
 	}
 
-	public Content addContent(SyncClient client, String module, Byte type, Byte status, Long upUserId, Long upChannelId,
+	
+	/**
+	 * 添加内容
+	 */
+	public Content addContent(DruidPooledConnection conn, String module, Byte type, Byte status, Long upUserId, Long upChannelId,
 			String title, String data, Byte paid) throws Exception {
 
 		Long id = IDUtils.getSimpleId();
