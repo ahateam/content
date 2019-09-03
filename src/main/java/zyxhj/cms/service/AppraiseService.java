@@ -40,51 +40,35 @@ public class AppraiseService {
 	//创建点赞或菜
 	public Appraise createAppraise(SyncClient client,Long ownerId,Long userId, Long value) throws ServerException {
 		Appraise appraise = new Appraise();
-		Long id = IDUtils.getSimpleId();
-		appraise._id = TSUtils.get_id(id);
+		appraise._id = TSUtils.get_id(ownerId);
 		appraise.ownerId = ownerId;
 		appraise.userId = userId;
 		appraise.value = value;
-		appraiseRepository.insert(client, appraise, false);
+		appraiseRepository.insert(client, appraise, true);
 		return appraise;
 		
 	}
 	//删除点赞或踩
 	public void delAppraise(SyncClient client,Long ownerId,Long userId) throws ServerException {
-		
-		PrimaryKey pk = null;
-		if(userId != null) {//如果用户id为空，则删除此内容下的所有赞和踩，否则就只删除此用户在此内容下的赞和踩
-			 pk = new PrimaryKeyBuilder().add("ownerId", ownerId).add("userId", userId).build();
-		}else {
-			 pk = new PrimaryKeyBuilder().add("ownerId", ownerId).build();
-		}
+		String _id = TSUtils.get_id(ownerId);
+		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).add("userId", userId).build();
 		AppraiseRepository.nativeDel(client, appraiseRepository.getTableName(), pk);
 	}
 	//修改状态
 	public void editAppraise(SyncClient client,Long ownerId,Long userId,Long value) throws ServerException {
-		PrimaryKey pk = null;
-		if(userId != null) {//如果用户id为空，则修改此内容下的所有赞和踩，否则就只修改此用户在此内容下的赞和踩
-			 pk = new PrimaryKeyBuilder().add("ownerId", ownerId).add("userId", userId).build();
-		}else {
-			 pk = new PrimaryKeyBuilder().add("ownerId", ownerId).build();
-		}
+		String _id = TSUtils.get_id(ownerId);
+		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).add("userId", userId).build();
 		ColumnBuilder cb = new ColumnBuilder();
 		cb.add("value", value);
 		List<Column> columns = cb.build();
 		AppraiseRepository.nativeUpdate(client, appraiseRepository.getTableName(), pk, true, columns);
 	}
 	//获取点赞数，踩数
-	public void getAppraiseCount(SyncClient client,Long ownerId,Long userId,Long value) throws ServerException {
+	public JSONObject getAppraiseCount(SyncClient client,Long ownerId,Long userId,Long value) throws Exception {	
 		TSQL ts = new TSQL();
-		if(ownerId != null) {
-			ts.Term(OP.AND, "value", value).Term(OP.AND, "value", value);
-		}
+		ts.Term(OP.AND, "value", value);
 		ts.setGetTotalCount(true);
 		SearchQuery query = ts.build();
-		JSONObject comment = appraiseRepository.nativeSearch(client, appraiseRepository.getTableName(), "core_appraise_index", query);
-		System.out.println(comment);
-		
+		return appraiseRepository.search(client, query);
 	}
-	
-	
 }

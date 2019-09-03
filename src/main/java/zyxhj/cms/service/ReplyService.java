@@ -41,13 +41,11 @@ public class ReplyService {
 	}
 	
 	//创建回复
-	public Reply createReply(SyncClient client,Long ownerId, Long status, Long upUserId, Long atUserId, String title, String text,
+	public Reply createReply(SyncClient client,Long ownerId, Long upUserId, Long atUserId, String title, String text,
 			String ext) throws ServerException {
 		Reply reply = new Reply();
-		Long id = IDUtils.getSimpleId();
-		reply._id = TSUtils.get_id(id);
+		reply._id = TSUtils.get_id(ownerId);
 		reply.ownerId =ownerId;
-		//reply.sequenceId = 0L;
 		reply.createTime = new Date();
 		reply.status = reply.STATUS_ACCEPT;
 		reply.upUserId = upUserId;
@@ -55,38 +53,37 @@ public class ReplyService {
 		reply.title = title;
 		reply.text =text;
 		reply.ext = ext;
-		replyRepository.insert(client, reply, false);
+		replyRepository.insert(client, reply, true);
 		return reply;
 	}
+	
 	//编辑修改回复
 	public void editReply(SyncClient client,Long ownerId,Long sequenceId,Long status,String title,String text,String ext) throws ServerException {
-		PrimaryKey pk = new PrimaryKeyBuilder().add("ownerId", ownerId).add("sequenceId", sequenceId).build();
-		ColumnBuilder cb = new ColumnBuilder();
-		cb.add("status", status);
-		cb.add("title", title);
-		cb.add("text", text);
-		cb.add("ext", ext);
-		List<Column> columns = cb.build();
-		ReplyRepository.nativeUpdate(client, replyRepository.getTableName(), pk, true, columns);
+		Reply reply = new Reply();
+		reply._id = TSUtils.get_id(ownerId);
+		reply.ownerId = ownerId;
+		reply.sequenceId = sequenceId;
+		reply.status = status;
+		reply.title = title;
+		reply.text= text;
+		reply.ext = ext;
+		replyRepository.update(client, reply, true);
 	}
+	
 	//删除回复
-	public void delReply(SyncClient client,String _id,Long ownerId,Long sequenceId) throws ServerException {
-		PrimaryKey pk = new PrimaryKeyBuilder().add("ownerId", ownerId).add("sequenceId", sequenceId).build();
+	public void delReply(SyncClient client,Long ownerId,Long sequenceId) throws ServerException {
+		String _id = TSUtils.get_id(ownerId);
+		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).add("sequenceId", sequenceId).build();
 		replyRepository.delete(client, pk);
 	}
+	
 	//根据状态获取回复评论，没有状态则获取全部回复评论
-	public JSONObject getReplyList(SyncClient client,String _id,Long ownerId,Long status,Integer count, Integer offset) throws Exception {
-		PrimaryKey pk = new PrimaryKeyBuilder().add("ownerId", ownerId).build();
-		
+	public JSONObject getReplyList(SyncClient client,Long ownerId,Long status,Integer count, Integer offset) throws Exception {
+		String _id = TSUtils.get_id(ownerId);
+		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).build();
 		TSQL ts = new TSQL();
-		if(status != null) {
-			ts.Term(OP.NONE, "status", status);
-		}
-		ts.addSort(new FieldSort("sequenceId", SortOrder.ASC) );
-		ts.setLimit(count);
-		ts.setOffset(offset);
+		ts.Term(OP.AND, "status", status);
 		SearchQuery query = ts.build();
 		return replyRepository.search(client, query);
-		//return replyRepository.nativeSearch(client, replyRepository.getTableName(), "core_reply_index", query);
 	}
 }

@@ -1,5 +1,6 @@
 package zyxhj.cms.controller;
 
+import java.sql.SQLException;
 import java.util.Date;
 
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import zyxhj.cms.service.ChannelService;
 import zyxhj.cms.service.CommentService;
 import zyxhj.cms.service.ContentService;
 import zyxhj.cms.service.ContentTagService;
+import zyxhj.cms.service.ReplyService;
 import zyxhj.cms.service.TaskWallService;
 import zyxhj.cms.service.UpvoteService;
 import zyxhj.core.domain.User;
@@ -27,6 +29,7 @@ import zyxhj.utils.ServiceUtils;
 import zyxhj.utils.Singleton;
 import zyxhj.utils.api.APIResponse;
 import zyxhj.utils.api.Controller;
+import zyxhj.utils.api.ServerException;
 import zyxhj.utils.data.DataSource;
 
 public class ContentController extends Controller {
@@ -42,6 +45,7 @@ public class ContentController extends Controller {
 	private UserService userService;
 	private CommentService commentService;
 	private UpvoteService upvoteService;
+	private ReplyService replyservice;
 
 	public ContentController(String node) {
 		super(node);
@@ -1311,5 +1315,27 @@ public class ContentController extends Controller {
 			return APIResponse.getNewSuccessResp(contentService.getUserBuyContent(client, conn, userId));
 		}
 	}
+	
+	/**
+	 * 创建回复
+	 */
+	@POSTAPI(//
+			path = "createReply", //
+			des = "获取用户已购买的内容列表", //
+			ret = "内容列表 ")
+	public APIResponse createReply(//
+			@P(t = "用户编号") Long ownerId, //status
+			@P(t = "状态") Long status, //
+			@P(t = "上传用户id") Long upUserId, //Long atUserId String title  String text  String ext
+			@P(t = "@用户id",r=false) Long atUserId,
+			@P(t = "标题") String title,
+			@P(t = "文本") String text,
+			@P(t = "扩展信息",r=false) String ext
+	) throws Exception {
+		try (DruidPooledConnection conn = dds.getConnection()) {
 
+			return APIResponse.getNewSuccessResp(replyservice.createReply(client,ownerId,status,upUserId,atUserId,title,text,ext));
+		}
+	}
+	
 }
