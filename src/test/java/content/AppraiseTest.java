@@ -19,7 +19,7 @@ public class AppraiseTest {
 	private static DruidPooledConnection conn;
 	private static AppraiseService appraiseService;
 	private static SyncClient client;
-	
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		try {
@@ -35,48 +35,50 @@ public class AppraiseTest {
 	public static void tearDownAfterClass() throws Exception {
 		conn.close();
 	}
-	
+
 	@Test
 	public void createAppraise() {
 		Long ownerId = 100400L;
 		Long userId = 802L;
-		Long value = 0L;
-		
+		Byte value = 0;
+
 		try {
 			appraiseService.createAppraise(client, ownerId, userId, value);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
 	}
+
 	@Test
 	public void delAppraise() {
 		Long ownerId = 100400L;
 		Long userId = 800L;
-		Long value = 0L;
-		
+
 		try {
 			appraiseService.delAppraise(client, ownerId, userId);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
 	}
+
 	@Test
 	public void editAppraise() {
 		Long ownerId = 100400L;
 		Long userId = 802L;
-		Long value = 1L;
-		
+		Byte value = 1;
+
 		try {
 			appraiseService.editAppraise(client, ownerId, userId, value);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
 	}
+
 	@Test
 	public void getAppraise() {
 		Long ownerId = 100400L;
 		Long userId = 802L;
-		Long value = 1L;
+		Byte value = 1;
 		try {
 			JSONObject json = appraiseService.getAppraiseCount(client, ownerId, userId, value);
 			System.out.println(json.toJSONString());

@@ -22,23 +22,22 @@ import zyxhj.utils.data.ts.TSQL;
 import zyxhj.utils.data.ts.TSQL.OP;
 import zyxhj.utils.data.ts.TSUtils;
 
-
 //赞
 public class AppraiseService {
 	private static Logger log = LoggerFactory.getLogger(AppraiseService.class);
-	
+
 	public AppraiseRepository appraiseRepository;
-	
+
 	public AppraiseService() {
 		try {
 			appraiseRepository = Singleton.ins(AppraiseRepository.class);
-		}catch (Exception e) {
-			log.error(e.getMessage(),e);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
 		}
 	}
-	
-	//创建点赞或菜
-	public Appraise createAppraise(SyncClient client,Long ownerId,Long userId, Long value) throws ServerException {
+
+	// 创建点赞或菜
+	public Appraise createAppraise(SyncClient client, Long ownerId, Long userId, Byte value) throws ServerException {
 		Appraise appraise = new Appraise();
 		appraise._id = TSUtils.get_id(ownerId);
 		appraise.ownerId = ownerId;
@@ -46,16 +45,18 @@ public class AppraiseService {
 		appraise.value = value;
 		appraiseRepository.insert(client, appraise, true);
 		return appraise;
-		
+
 	}
-	//删除点赞或踩
-	public void delAppraise(SyncClient client,Long ownerId,Long userId) throws ServerException {
+
+	// 删除点赞或踩
+	public void delAppraise(SyncClient client, Long ownerId, Long userId) throws ServerException {
 		String _id = TSUtils.get_id(ownerId);
 		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).add("userId", userId).build();
 		AppraiseRepository.nativeDel(client, appraiseRepository.getTableName(), pk);
 	}
-	//修改状态
-	public void editAppraise(SyncClient client,Long ownerId,Long userId,Long value) throws ServerException {
+
+	// 修改状态
+	public void editAppraise(SyncClient client, Long ownerId, Long userId, Byte value) throws ServerException {
 		String _id = TSUtils.get_id(ownerId);
 		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).add("userId", userId).build();
 		ColumnBuilder cb = new ColumnBuilder();
@@ -63,8 +64,9 @@ public class AppraiseService {
 		List<Column> columns = cb.build();
 		AppraiseRepository.nativeUpdate(client, appraiseRepository.getTableName(), pk, true, columns);
 	}
-	//获取点赞数，踩数
-	public JSONObject getAppraiseCount(SyncClient client,Long ownerId,Long userId,Long value) throws Exception {	
+
+	// 获取点赞数，踩数
+	public JSONObject getAppraiseCount(SyncClient client, Long ownerId, Long userId, Byte value) throws Exception {
 		TSQL ts = new TSQL();
 		ts.Term(OP.AND, "value", value);
 		ts.setGetTotalCount(true);
