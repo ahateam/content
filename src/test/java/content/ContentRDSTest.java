@@ -1,11 +1,16 @@
 package content;
 
-
 import java.util.List;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+
 import zyxhj.cms.domian.Content;
 import zyxhj.cms.service.ContentServiceRDS;
 import zyxhj.utils.Singleton;
@@ -14,6 +19,7 @@ import zyxhj.utils.data.DataSource;
 public class ContentRDSTest {
 	private static DruidPooledConnection conn;
 	private static ContentServiceRDS conser;
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		try {
@@ -28,33 +34,50 @@ public class ContentRDSTest {
 	public static void tearDownAfterClass() throws Exception {
 		conn.close();
 	}
-	
+
 	@Test
 	public void addContent() {
 		Content c = new Content();
 		String moduleId = "1221";
 		Byte type = 1;
 		Byte status = 1;
-		Byte power =2;
+		Byte power = 2;
 		String title = "title";
 		Long upUserId = 45L;
 		Long upChannelId = 54L;
-		String tags = "{\"name\":\"Tim\",\"age\":\"25\"}";
+
+		JSONObject jo = new JSONObject();
+
+		JSONArray a1 = new JSONArray();
+		a1.add("tag1");
+		a1.add("tag2");
+
+		JSONArray a2 = new JSONArray();
+		a2.add("tagaa");
+		a2.add("tagbb");
+
+		jo.put("group1", a1);
+		jo.put("group2", a2);
+
+		System.out.println(JSON.toJSONString(jo));
+
+		JSONObject tags = jo;
 		String proviteData = "";
 		String ext = "";
 		String data = "data";
 		try {
-			conser.addContent(conn, moduleId, type, status, power, upUserId, upChannelId, title, tags, data,proviteData,ext);
+			conser.addContent(conn, moduleId, type, status, power, upUserId, upChannelId, title, tags, data,
+					proviteData, ext);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void searchContent() {
 		Byte type = null;
-		Byte status =null;
+		Byte status = null;
 		try {
 			List<Content> list = conser.searchContents(conn, type, status, 10, 0);
 			System.out.println(list.size());
@@ -63,7 +86,7 @@ public class ContentRDSTest {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void getcontent() {
 		try {
@@ -74,14 +97,14 @@ public class ContentRDSTest {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void editcontent() {
 		Content c = new Content();
 		Long id = 401280137781325L;
 		Byte type = 3;
 		Byte status = 3;
-		Byte power =8;
+		Byte power = 8;
 		String title = "title_a";
 		Long upUserId = 80L;
 		Long upChannelId = 80L;
@@ -90,13 +113,14 @@ public class ContentRDSTest {
 		String ext = "78";
 		String data = "data_a";
 		try {
-			conser.editContent(conn, id, null, type, status, power, upUserId, upChannelId, title, data, proviteData, ext);
+			conser.editContent(conn, id, null, type, status, power, upUserId, upChannelId, title, data, proviteData,
+					ext);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void delcontent() {
 		try {
