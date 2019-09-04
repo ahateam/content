@@ -43,7 +43,7 @@ public class AppraiseTest {
 		Byte value = 0;
 
 		try {
-			appraiseService.createAppraise(client, ownerId, userId, value);
+			appraiseService.createAppraise(ownerId, userId, value);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
@@ -55,7 +55,7 @@ public class AppraiseTest {
 		Long userId = 800L;
 
 		try {
-			appraiseService.delAppraise(client, ownerId, userId);
+			appraiseService.delAppraise(ownerId, userId);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
@@ -68,7 +68,7 @@ public class AppraiseTest {
 		Byte value = 1;
 
 		try {
-			appraiseService.editAppraise(client, ownerId, userId, value);
+			appraiseService.editAppraise(ownerId, userId, value);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
@@ -80,7 +80,7 @@ public class AppraiseTest {
 		Long userId = 802L;
 		Byte value = 1;
 		try {
-			JSONObject json = appraiseService.getAppraiseCount(client, ownerId, userId, value);
+			JSONObject json = appraiseService.getAppraiseCount( ownerId, userId, value);
 			System.out.println(json.toJSONString());
 		} catch (Exception e) {
 			e.printStackTrace();

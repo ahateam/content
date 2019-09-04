@@ -92,22 +92,22 @@ public class ContentServiceRDS {
 	}
 
 	/**
-	 * 根据条件查询内容
+	 * 根据条件查询内容 获取用户发布内容
 	 * 
 	 * @throws ServerException
 	 */
-	public List<Content> searchContents(DruidPooledConnection conn, Byte type, Byte status, int count, int offset)
+	public List<Content> getContents(DruidPooledConnection conn,String moduleId, Byte type, 
+			Byte status,Byte power,Long upUserId,Long upChannelId, String tags,int count, int offset)
 			throws ServerException {
-		if (type == null && status == null) {
-			return contentRepository.getList(conn, null, count, offset);
-		} else if (type != null && status != null) {
-			return contentRepository.getList(conn, EXP.INS().key("type", type).andKey("status", status), count, offset);
-		} else if (type != null) {
-			return contentRepository.getList(conn, EXP.INS().key("type", type), count, offset);
-		} else if (status != null) {
-			return contentRepository.getList(conn, EXP.INS().key("type", type), count, offset);
+		JSONObject keys = null;
+		if(tags !=null) {
+			 keys = JSONObject.parseObject(tags);
 		}
-		return null;
+		EXP exp = EXP.INS(false).key("module_id", moduleId).andKey("type", type).andKey("status", status).andKey("power", power).andKey("up_user_id", upUserId).andKey("up_channel_id", upChannelId);
+		if(tags !=null && keys.size()>0) {
+			exp = exp.and(EXP.JSON_CONTAINS_JSONOBJECT(keys, "tags"));
+		}
+		return contentRepository.getList(conn,exp, count, offset);
 	}
 
 	/**

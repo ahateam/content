@@ -56,8 +56,8 @@ public class ContentRDSTest {
 		a2.add("tagaa");
 		a2.add("tagbb");
 
-		jo.put("group1", a1);
-		jo.put("group2", a2);
+		jo.put("图片", a1);
+		jo.put("视频", a2);
 
 		System.out.println(JSON.toJSONString(jo));
 
@@ -76,10 +76,30 @@ public class ContentRDSTest {
 
 	@Test
 	public void searchContent() {
+		String moduleId = "1221";
 		Byte type = null;
 		Byte status = null;
+		Byte power = null;
+		Long upUserId = 48L;
+		Long upChannelId =null;
+		//
+		JSONObject jo = new JSONObject();
+
+		JSONArray a1 = new JSONArray();
+		a1.add("tag0");
+		a1.add("tag3");
+
+		JSONArray a2 = new JSONArray();
+		a2.add("tagaa");
+		a2.add("tagbb");
+
+		jo.put("图片",null);
+		jo.put("group2", null);
+		//
+		String tags = jo.toJSONString();
+		System.out.println(tags);
 		try {
-			List<Content> list = conser.searchContents(conn, type, status, 10, 0);
+			List<Content> list = conser.getContents(conn, moduleId, type, status, power,upUserId,upChannelId, tags,10, 0);
 			System.out.println(list.size());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
