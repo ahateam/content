@@ -1,6 +1,7 @@
 package content;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -14,6 +15,7 @@ import com.alibaba.fastjson.JSONObject;
 import zyxhj.cms.domian.Content;
 import zyxhj.cms.service.ContentServiceRDS;
 import zyxhj.utils.Singleton;
+import zyxhj.utils.api.ServerException;
 import zyxhj.utils.data.DataSource;
 
 public class ContentRDSTest {
@@ -80,11 +82,11 @@ public class ContentRDSTest {
 		Byte type = null;
 		Byte status = null;
 		Byte power = null;
-		Long upUserId = 48L;
+		Long upUserId = null;
 		Long upChannelId =null;
 		//
 		JSONObject jo = new JSONObject();
-
+		
 		JSONArray a1 = new JSONArray();
 		a1.add("tag0");
 		a1.add("tag3");
@@ -93,8 +95,16 @@ public class ContentRDSTest {
 		a2.add("tagaa");
 		a2.add("tagbb");
 
-		jo.put("图片",null);
-		jo.put("group2", null);
+		jo.put("图片",a1);
+		jo.put("group2", a2);
+		
+		 //10.取得JSONObject对象中key的集合
+//        Set<String> keySet= jo.keySet();
+//        for (String key : keySet) {
+//            //System.out.println("   "+key);
+//        }
+        JSONArray name1 = jo.getJSONArray("图片");
+        System.out.println(name1.get(0)+"*"+name1.get(1));
 		//
 		String tags = jo.toJSONString();
 		System.out.println(tags);
@@ -146,6 +156,28 @@ public class ContentRDSTest {
 		try {
 			conser.delContentById(conn, 401280027423269L);
 		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void setConntentTag() {
+JSONObject jo = new JSONObject();
+		
+		JSONArray a1 = new JSONArray();
+		a1.add("tag9");
+		a1.add("tag3");
+
+		JSONArray a2 = new JSONArray();
+		a2.add("tagaa");
+		a2.add("tagbb");
+
+		jo.put("图片1",a2);
+		String tags = jo.toJSONString();
+		try {
+			conser.setConntentTag(conn, 401303127864401L, tags, true);
+		} catch (ServerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

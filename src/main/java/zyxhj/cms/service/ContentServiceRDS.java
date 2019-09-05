@@ -2,6 +2,7 @@ package zyxhj.cms.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.math3.analysis.function.Exp;
 import org.slf4j.Logger;
@@ -115,5 +116,31 @@ public class ContentServiceRDS {
 	 */
 	public Content getConntent(DruidPooledConnection conn, Long id) throws ServerException {
 		return contentRepository.get(conn, EXP.INS().key("id", id));
+	}
+	
+	/**
+	 * 设置添加加内容标签
+	 */
+	public int setConntentTag(DruidPooledConnection conn, Long id,String tags,Boolean isGroup) throws ServerException {
+		EXP where = EXP.INS().key("id", id);
+		JSONObject keys = null;
+		if(tags !=null) {
+			 keys = JSONObject.parseObject(tags);
+		}
+		String tagGroup = getJsonObjectKey(keys);
+		//这里只考虑一次只能在当前分组中添加一个标签
+		EXP tagAppend = EXP.JSON_ARRAY_APPEND_ONKEY("tags", tagGroup, keys.getJSONArray((tagGroup)).get(0), true);
+		return contentRepository.update(conn, tagAppend, where);
+	}
+	
+	/**
+	 * 取jsonobject的key
+	 */
+	public String getJsonObjectKey(JSONObject jo) {
+		Set<String> keySet= jo.keySet();
+        for (String key : keySet) {
+            return key;
+        }
+        return null;
 	}
 }
