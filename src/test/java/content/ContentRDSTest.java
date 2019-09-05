@@ -163,20 +163,22 @@ public class ContentRDSTest {
 	
 	@Test
 	public void setConntentTag() {
-JSONObject jo = new JSONObject();
+		JSONObject jo = new JSONObject();
 		
 		JSONArray a1 = new JSONArray();
-		a1.add("tag9");
-		a1.add("tag3");
+		a1.add("tag10");
+		a1.add("tag11");
+		a1.add("tag12");
 
 		JSONArray a2 = new JSONArray();
 		a2.add("tagaa");
 		a2.add("tagbb");
 
-		jo.put("图片1",a2);
-		String tags = jo.toJSONString();
+		jo.put("图片1",a1);
+		jo.put("图片",a1);
+		
 		try {
-			conser.setConntentTag(conn, 401303127864401L, tags, true);
+			conser.setConntentTag(conn, 401323207386162L, jo, true);
 		} catch (ServerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

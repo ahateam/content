@@ -121,16 +121,17 @@ public class ContentServiceRDS {
 	/**
 	 * 设置添加加内容标签
 	 */
-	public int setConntentTag(DruidPooledConnection conn, Long id,String tags,Boolean isGroup) throws ServerException {
+	public int setConntentTag(DruidPooledConnection conn, Long id,JSONObject tags,Boolean isGroup) throws ServerException {
 		EXP where = EXP.INS().key("id", id);
-		JSONObject keys = null;
-		if(tags !=null) {
-			 keys = JSONObject.parseObject(tags);
-		}
-		String tagGroup = getJsonObjectKey(keys);
-		//这里只考虑一次只能在当前分组中添加一个标签
-		EXP tagAppend = EXP.JSON_ARRAY_APPEND_ONKEY("tags", tagGroup, keys.getJSONArray((tagGroup)).get(0), true);
-		return contentRepository.update(conn, tagAppend, where);
+		int ret = 0;
+		Set<String> keySet= tags.keySet();
+        for (String key : keySet) {
+            for(int i=0;i<tags.getJSONArray(key).size();i++) {
+            	EXP tagAppend = EXP.JSON_ARRAY_APPEND_ONKEY("tags", key, tags.getJSONArray((key)).get(i), true);
+        		ret = contentRepository.update(conn, tagAppend, where);			
+            }
+        }
+        return ret;
 	}
 	
 	/**
