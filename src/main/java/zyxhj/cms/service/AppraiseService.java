@@ -82,8 +82,16 @@ public class AppraiseService extends Controller{
 	public void editAppraise(
 			@P(t = "内容编号") Long ownerId, 
 			@P(t = "用户编号") Long userId, 
-			@P(t = "状态 VALUE_PRAISE=0赞 ，STATUS_DISS=1踩") Byte value
+			@P(t = "状态0赞 ,1踩") Byte value
 	) throws ServerException {
+//		Appraise appraise = new Appraise();
+//		appraise._id = TSUtils.get_id(ownerId);
+//		appraise.ownerId = ownerId;
+//		appraise.userId = userId;
+//		appraise.value = (Byte)value;
+//		appraiseRepository.update(client, appraise, true);
+//		
+		
 		String _id = TSUtils.get_id(ownerId);
 		PrimaryKey pk = new PrimaryKeyBuilder().add("_id", _id).add("ownerId", ownerId).add("userId", userId).build();
 		ColumnBuilder cb = new ColumnBuilder();

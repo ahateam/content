@@ -40,12 +40,13 @@ public class ReplyTest {
 		Long ownerId = 123584L;
 		Long upUserId = 900L;
 		Long atUserId = 200L;
+		String atUserName = "1";
 		String title = "回复标题(a)";
 		String text = "回复内容(a)";
-		String ext = "";
+		String ext = "1";
 
 		try {
-			replyService.createReply(client, ownerId, upUserId, atUserId, "atUserNamexx", title, text, ext);
+			replyService.createReply(ownerId, upUserId, atUserId,atUserName , title, text, ext);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
@@ -61,7 +62,7 @@ public class ReplyTest {
 		String ext = "测试内容b";
 
 		try {
-			replyService.editReply(client, ownerId, 1567475489126000L, title, text, ext);
+			replyService.editReply(ownerId, 1567475489126000L, title, text, ext);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
@@ -77,26 +78,26 @@ public class ReplyTest {
 		String ext = "测试内容b";
 
 		try {
-			replyService.delReply(client, 123588L, 1567475489126000L);
+			replyService.delReply( 123588L, 1567475489126000L);
 		} catch (ServerException e) {
 			e.printStackTrace();
 		}
 	}
 
-	@Test
-	public void getReply() {
-		Long ownerId = 123588L;
-		Long upUserId = 800L;
-		Long atUserId = 200L;
-		String title = "回复标题(b)";
-		String text = "回复内容(b)";
-		String ext = "测试内容b";
-
-		try {
-			JSONObject json = replyService.getReplyList(client, 123584L, 1L, 10, 1);
-			System.out.println(json.toJSONString());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+//	@Test
+//	public void getReply() {
+//		Long ownerId = 123588L;
+//		Long upUserId = 800L;
+//		Long atUserId = 200L;
+//		String title = "回复标题(b)";
+//		String text = "回复内容(b)";
+//		String ext = "测试内容b";
+//
+//		try {
+//			JSONObject json = replyService.getReplyList(123584L, 1L, 10, 1);
+//			System.out.println(json.toJSONString());
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//	}
 }

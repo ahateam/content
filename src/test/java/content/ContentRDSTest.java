@@ -40,33 +40,27 @@ public class ContentRDSTest {
 	@Test
 	public void addContent() {
 		Content c = new Content();
-		String moduleId = "1221";
-		Byte type = 1;
+		String moduleId = "1170";
+		Byte type = 5;
 		Byte status = 1;
-		Byte power = 2;
-		String title = "title";
-		Long upUserId = 45L;
-		Long upChannelId = 54L;
+		Byte power = 0;
+		String title = "感动女人的10句温柔的话";
+		Long upUserId = 20180906L;
+		Long upChannelId = 2001L;
 
 		JSONObject jo = new JSONObject();
 
 		JSONArray a1 = new JSONArray();
-		a1.add("tag1");
-		a1.add("tag2");
+		a1.add("两性");
 
-		JSONArray a2 = new JSONArray();
-		a2.add("tagaa");
-		a2.add("tagbb");
-
-		jo.put("图片", a1);
-		jo.put("视频", a2);
+		jo.put("今日热读", a1);
 
 		System.out.println(JSON.toJSONString(jo));
 
 		JSONObject tags = jo;
 		String proviteData = "";
 		String ext = "";
-		String data = "data";
+		String data = "";
 		try {
 			conser.addContent(conn, moduleId, type, status, power, upUserId, upChannelId, title, tags, data,
 					proviteData, ext);
@@ -120,8 +114,7 @@ public class ContentRDSTest {
 	@Test
 	public void getcontent() {
 		try {
-			Content c = conser.getConntent(conn, 401280142071039L);
-			System.out.println(c.id);
+			Content c = conser.getConntent(conn, 401326881677336L);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

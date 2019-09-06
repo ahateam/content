@@ -53,9 +53,9 @@ public class ReplyService extends Controller {
 	public Reply createReply(//
 			@P(t = "持有者编号") Long ownerId, //
 			@P(t = "提交者编号") Long upUserId, //
-			@P(t = "@对象编号") Long atUserId, //
-			@P(t = "@对象名称") String atUserName, //
-			@P(t = "标题") String title, //
+			@P(t = "@对象编号",r = false) Long atUserId, //
+			@P(t = "@对象名称",r = false) String atUserName, //
+			@P(t = "标题",r = false) String title, //
 			@P(t = "正文") String text, //
 			@P(t = "扩展", r = false) String ext//
 	) throws ServerException {
